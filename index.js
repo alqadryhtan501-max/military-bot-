@@ -6,7 +6,7 @@ const {
 } = require('discord.js');
 
 const setupPanel = require('./src/commands/setupPanel');
-const { handleButtons } = require('./src/buttons/buttonHandler');
+const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 const { handleModals } = require('./src/modals/modalHandler');
 
 const client = new Client({
