@@ -21,7 +21,18 @@ client.once('ready', () => {
     console.log(`🤖 تم تشغيل البوت بنجاح باسم: ${client.user.tag}`);
 });
 
+
 client.on('messageCreate', async (message) => {
+
+    console.log('وصلت رسالة:', message.content);
+
+    if (message.author.bot) return;
+
+    if (message.content === '!setup-panel') {
+        await setupPanel.execute(message);
+    }
+
+});
 
     if (message.author.bot) return;
 
