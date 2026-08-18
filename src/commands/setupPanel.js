@@ -6,13 +6,11 @@ const {
 } = require('discord.js');
 
 module.exports = {
-    async execute(message) {
+    async execute(interaction) {
 
         const embed = new EmbedBuilder()
             .setTitle('🏛️ لوحة نظام المواطنين')
-            .setDescription(
-                'اختر الخدمة المطلوبة من الأزرار بالأسفل.'
-            )
+            .setDescription('اختر الخدمة المطلوبة من الأزرار بالأسفل.')
             .setColor('#2b2d31')
             .setTimestamp();
 
@@ -47,7 +45,7 @@ module.exports = {
                 .setStyle(ButtonStyle.Primary)
         );
 
-        await message.channel.send({
+        await interaction.reply({
             embeds: [embed],
             components: [row1, row2]
         });
