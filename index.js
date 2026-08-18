@@ -7,7 +7,6 @@ const {
 
 const setupPanel = require('./src/commands/setupPanel');
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
-const { handleModals } = require('./src/commands/src/modals/modalHandler');node:internal/modules/cjs/loader:1522
   throw err;
   ^
 
