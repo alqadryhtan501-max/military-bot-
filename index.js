@@ -1,13 +1,4 @@
-require('dotenv').config();
-
-const {
-    Client,
-    GatewayIntentBits
-} = require('discord.js');
-
-const setupPanel = require('./src/commands/setupPanel');
-const { handleButtons } = require('./src/buttons/buttonHandler');
-const { handleModals } = require('./src/modals/modalHandler');
+const { Client, GatewayIntentBits } = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -18,40 +9,17 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-    console.log(`🤖 تم تشغيل البوت بنجاح باسم: ${client.user.tag}`);
+    console.log(`ONLINE: ${client.user.tag}`);
 });
 
-
-client.on('messageCreate', async (message) => {
-
-    console.log('وصلت رسالة:', message.content);
+client.on('messageCreate', (message) => {
+    console.log(`MESSAGE: ${message.content}`);
 
     if (message.author.bot) return;
 
-    if (message.content === '!setup-panel') {
-        await setupPanel.execute(message);
+    if (message.content === '!test') {
+        message.reply('✅ البوت يستقبل الرسائل');
     }
-
-});
-
-    if (message.author.bot) return;
-
-    if (message.content === '!setup-panel') {
-        await setupPanel.execute(message);
-    }
-
-});
-
-client.on('interactionCreate', async (interaction) => {
-
-    if (interaction.isButton()) {
-        return handleButtons(interaction);
-    }
-
-    if (interaction.isModalSubmit()) {
-        return handleModals(interaction);
-    }
-
 });
 
 client.login(process.env.DISCORD_TOKEN);
