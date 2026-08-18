@@ -6,6 +6,7 @@ const {
 } = require('discord.js');
 
 const setupPanel = require('./src/commands/setupPanel');
+const { handleButtons } = require('./src/buttons/buttonHandler');
 
 const client = new Client({
     intents: [
@@ -25,6 +26,14 @@ client.on('messageCreate', async (message) => {
 
     if (message.content === '!setup-panel') {
         await setupPanel.execute(message);
+    }
+
+});
+
+client.on('interactionCreate', async (interaction) => {
+
+    if (interaction.isButton()) {
+        await handleButtons(interaction);
     }
 
 });
