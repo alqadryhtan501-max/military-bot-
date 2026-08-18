@@ -1,4 +1,13 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+require('dotenv').config();
+
+const {
+    Client,
+    GatewayIntentBits
+} = require('discord.js');
+
+const setupPanel = require('./src/commands/setupPanel');
+const { handleButtons } = require('./src/buttons/buttonHandler');
+const { handleModals } = require('./src/modals/modalHandler');
 
 const client = new Client({
     intents: [
@@ -9,17 +18,40 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-    console.log(`ONLINE: ${client.user.tag}`);
+    console.log(`🤖 تم تشغيل البوت: ${client.user.tag}`);
 });
 
-client.on('messageCreate', (message) => {
-    console.log(`MESSAGE: ${message.content}`);
+client.on('interactionCreate', async (interaction) => {
 
-    if (message.author.bot) return;
+    try {
 
-    if (message.content === '!test') {
-        message.reply('✅ البوت يستقبل الرسائل');
+        if (interaction.isChatInputCommand()) {
+
+            if (interaction.commandName === 'setup-panel') {
+                return await setupPanel.execute(interaction);
+            }
+
+        }
+
+        if (interaction.isButton()) {
+            return await handleButtons(interaction);
+        }
+
+        if (interaction.isModalSubmit()) {
+            return await handleModals(interaction);
+        }
+
+    } catch (error) {
+        console.error('Interaction Error:', error);
+
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ حدث خطأ أثناء تنفيذ الأمر.',
+                ephemeral: true
+            });
+        }
     }
+
 });
 
 client.login(process.env.DISCORD_TOKEN);
