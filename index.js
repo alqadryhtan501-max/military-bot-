@@ -7,6 +7,7 @@ const {
 
 const setupPanel = require('./src/commands/setupPanel');
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
+const { handleModals } = require('./src/modals/modalHandler');
 
 const client = new Client({
     intents: [
@@ -34,6 +35,10 @@ client.on('interactionCreate', async (interaction) => {
 
         if (interaction.isButton()) {
             return await handleButtons(interaction);
+        }
+
+        if (interaction.isModalSubmit()) {
+            return await handleModals(interaction);
         }
 
     } catch (error) {
