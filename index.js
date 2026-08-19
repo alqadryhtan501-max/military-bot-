@@ -4,14 +4,14 @@ const {
 } = require('discord.js');
 
 const setupPanel = require('./src/commands/setupPanel');
-
-// جلب دوال معالجة الأزرار والمودال من المسارات المكتشفة في جهازك
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 const { handleModals } = require('./src/commands/modals/modalHandler');
 
-// 🛠️ البيانات الخاصة بك تم وضعها هنا مباشرة بدون ملفات خارجية
+// 💡 تم تحديث التوكن الجديد بنجاح هنا
 const DISCORD_TOKEN = "MTUzOTMzNzc0NzA4MzU1OTA0Mg.GOqFeJ.GMyhRnrfJE6HdCXGgp5_JTcfqe-XtMRARQ0-wM";
-const GUILD_ID = "1539302231478763553GuildsIntentBitsst client = new Client({
+const GUILD_ID = "1539302231478763553";
+
+const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
@@ -52,5 +52,4 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-// تسجيل الدخول مباشرة باستخدام التوكن الثابت
 client.login(DISCORD_TOKEN);
