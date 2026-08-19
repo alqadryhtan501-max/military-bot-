@@ -1,15 +1,17 @@
-require('dotenv').config();
-
 const {
     Client,
     GatewayIntentBits
 } = require('discord.js');
 
 const setupPanel = require('./src/commands/setupPanel');
-const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 
-// 🔥 تم تعديل السطر رقم 10 هنا بالمسار الفعلي الموجود داخل جهازك واختفى الخطأ القديم تماماً
+// جلب دوال معالجة الأزرار والمودال من المسارات المكتشفة في جهازك
+const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 const { handleModals } = require('./src/commands/modals/modalHandler');
+
+// 🛠️ البيانات الخاصة بك تم وضعها هنا مباشرة بدون ملفات خارجية
+const DISCORD_TOKEN = "MTUzOTMzNzc0NzA4MzU1OTA0Mg.GJDW8l.8pAg7JYdFOEpkuQ-5mRnWejME-KKjI8YiYXs1k";
+const GUILD_ID = "1539302231478763553";
 
 const client = new Client({
     intents: [
@@ -20,7 +22,8 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-    console.log(`🤖 تم تشغيل البوت: ${client.user.tag}`);
+    console.log(`🤖 تم تشغيل البوت بنجاح: ${client.user.tag}`);
+    console.log(`📡 مرتبط بالسيرفر رقم: ${GUILD_ID}`);
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -51,4 +54,5 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// تسجيل الدخول مباشرة باستخدام التوكن الثابت
+client.login(DISCORD_TOKEN);
