@@ -5,12 +5,11 @@ const {
     GatewayIntentBits
 } = require('discord.js');
 
-// استدعاء الأوامر والأزرار والمودال بالمسارات المتطابقة تماماً مع لقطات الشاشة الحالية
 const setupPanel = require('./src/commands/setupPanel');
-const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 
-// 💡 تعديل المسار هنا ليتوافق مع المجلد المتداخل في الجيت هاب لديك: src/commands/src/modals/
-const { handleModals } = require('./src/commands/commands/src/modals/modalHandler'); 
+// تأكد من جلب الدالة المحددة باستخدام الأقواس لتطابق التصدير (Destructuring)
+const { handleButtons } = require('./src/commands/buttons/buttonHandler');
+const { handleModals } = require('./src/modals/modalHandler');
 
 const client = new Client({
     intents: [
@@ -21,7 +20,6 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-    // 💡 تم تعديل علامات الاقتباس إلى ` لكي يعمل الـ Template Literal ويظهر اسم البوت
     console.log(`🤖 تم تشغيل البوت: ${client.user.tag}`);
 });
 
