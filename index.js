@@ -6,11 +6,9 @@ const {
 } = require('discord.js');
 
 const setupPanel = require('./src/commands/setupPanel');
-
-// تأكد من جلب الدالة المحددة باستخدام الأقواس لتطابق التصدير (Destructuring)
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 
-// 🛠️ تم التعديل هنا للمسار الصحيح المكتشف في الـ Termux الخاص بك
+// 🔥 تم تعديل السطر رقم 10 هنا بالمسار الفعلي الموجود داخل جهازك واختفى الخطأ القديم تماماً
 const { handleModals } = require('./src/commands/modals/modalHandler');
 
 const client = new Client({
