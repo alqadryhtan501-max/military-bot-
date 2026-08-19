@@ -9,7 +9,9 @@ const setupPanel = require('./src/commands/setupPanel');
 
 // تأكد من جلب الدالة المحددة باستخدام الأقواس لتطابق التصدير (Destructuring)
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
-const { handleModals } = require('./src/modals/modalHandler');
+
+// 🛠️ تم التعديل هنا للمسار الصحيح المكتشف في الـ Termux الخاص بك
+const { handleModals } = require('./src/commands/modals/modalHandler');
 
 const client = new Client({
     intents: [
