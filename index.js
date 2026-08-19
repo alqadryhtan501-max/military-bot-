@@ -10,10 +10,8 @@ const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 const { handleModals } = require('./src/commands/modals/modalHandler');
 
 // 🛠️ البيانات الخاصة بك تم وضعها هنا مباشرة بدون ملفات خارجية
-const DISCORD_TOKEN = "MTUzOTMzNzc0NzA4MzU1OTA0Mg.GJDW8l.8pAg7JYdFOEpkuQ-5mRnWejME-KKjI8YiYXs1k";
-const GUILD_ID = "1539302231478763553";
-
-const client = new Client({
+const DISCORD_TOKEN = "MTUzOTMzNzc0NzA4MzU1OTA0Mg.GOqFeJ.GMyhRnrfJE6HdCXGgp5_JTcfqe-XtMRARQ0-wM";
+const GUILD_ID = "1539302231478763553GuildsIntentBitsst client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
