@@ -8,7 +8,6 @@ const {
 const setupPanel = require('./src/commands/setupPanel');
 const { handleButtons } = require('./src/commands/buttons/buttonHandler');
 const { handleModals } = require('./src/commands/modals/modalHandler');
-
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
