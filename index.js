@@ -1,6 +1,7 @@
 const {
     Client,
-    GatewayIntentBits
+    GatewayIntentBits,
+    MessageFlags
 } = require('discord.js');
 
 require('dotenv').config();
@@ -10,35 +11,28 @@ require('dotenv').config();
 // الأنظمة
 // =====================================================
 
-// لوحة النظام
 const setupPanel =
     require('./src/commands/setupPanel');
 
-
-// نظام الأزرار العام
 const {
     handleButtons
 } = require('./src/commands/buttons/buttonHandler');
 
-
-// نظام الـ Modals العام
 const {
     handleModals
 } = require('./src/commands/modals/modalHandler');
 
-
-// نظام البنك
 const {
     handleBankCommand
 } = require('./src/commands/bank/bankHandler');
 
 
+// =====================================================
 // نظام الشخصيات
-const {
-    showCharactersMenu,
-    handleCharacterButtons,
-    handleCharacterModals
-} = require('./src/commands/characters/characterHandler');
+// =====================================================
+
+const characterHandler =
+    require('./src/commands/characters/characterHandler');
 
 
 // =====================================================
@@ -53,7 +47,7 @@ const GUILD_ID =
 
 
 // =====================================================
-// التحقق من Environment
+// التحقق من الإعدادات
 // =====================================================
 
 if (!DISCORD_TOKEN) {
@@ -70,6 +64,7 @@ if (!GUILD_ID) {
     console.warn(
         '⚠️ GUILD_ID غير موجود في ملف .env'
     );
+
 }
 
 
@@ -93,22 +88,26 @@ const client = new Client({
 
 
 // =====================================================
-// Ready
+// تشغيل البوت
 // =====================================================
 
 client.once('ready', () => {
 
     console.log('');
     console.log('======================================');
+
     console.log(
         `🤖 تم تشغيل البوت بنجاح: ${client.user.tag}`
     );
+
     console.log(
         `📡 مرتبط بالسيرفر رقم: ${GUILD_ID}`
     );
+
     console.log(
         `🆔 Bot ID: ${client.user.id}`
     );
+
     console.log('======================================');
     console.log('');
 
@@ -131,9 +130,8 @@ client.on(
 
             if (interaction.isChatInputCommand()) {
 
-
                 // =============================================
-                // لوحة الشخصيات
+                // setup-characters
                 // =============================================
 
                 if (
@@ -141,7 +139,28 @@ client.on(
                     'setup-characters'
                 ) {
 
-                    return await showCharactersMenu(
+                    console.log(
+                        '🆔 تم استلام أمر setup-characters'
+                    );
+
+                    if (
+                        typeof characterHandler.showCharactersMenu !==
+                        'function'
+                    ) {
+
+                        console.error(
+                            '❌ showCharactersMenu غير موجودة في characterHandler.js'
+                        );
+
+                        return await interaction.reply({
+                            content:
+                                '❌ نظام الشخصيات غير مكتمل. راجع characterHandler.js',
+                            flags: MessageFlags.Ephemeral
+                        });
+
+                    }
+
+                    return await characterHandler.showCharactersMenu(
                         interaction
                     );
 
@@ -149,7 +168,7 @@ client.on(
 
 
                 // =============================================
-                // لوحة النظام الرئيسية
+                // setup-panel
                 // =============================================
 
                 if (
@@ -171,23 +190,14 @@ client.on(
                 const bankCommands = [
 
                     'bank',
-
                     'deposit',
-
                     'withdraw',
-
                     'transfer',
-
                     'give',
-
                     'bank-give',
-
                     'bank-take',
-
                     'bank-reset',
-
                     'bank-set',
-
                     'bank-info'
 
                 ];
@@ -205,6 +215,14 @@ client.on(
 
                 }
 
+
+                // إذا وصل أمر غير معروف
+                console.log(
+                    `⚠️ أمر غير معروف: ${interaction.commandName}`
+                );
+
+                return;
+
             }
 
 
@@ -214,9 +232,8 @@ client.on(
 
             if (interaction.isButton()) {
 
-
                 // =============================================
-                // أزرار نظام الشخصيات
+                // أزرار الشخصيات
                 // =============================================
 
                 if (
@@ -225,7 +242,24 @@ client.on(
                     )
                 ) {
 
-                    return await handleCharacterButtons(
+                    if (
+                        typeof characterHandler.handleCharacterButtons !==
+                        'function'
+                    ) {
+
+                        return await interaction.reply({
+
+                            content:
+                                '❌ نظام أزرار الشخصيات غير متوفر.',
+
+                            flags:
+                                MessageFlags.Ephemeral
+
+                        });
+
+                    }
+
+                    return await characterHandler.handleCharacterButtons(
                         interaction
                     );
 
@@ -233,7 +267,7 @@ client.on(
 
 
                 // =============================================
-                // باقي أزرار النظام
+                // باقي الأزرار
                 // =============================================
 
                 return await handleButtons(
@@ -249,9 +283,8 @@ client.on(
 
             if (interaction.isModalSubmit()) {
 
-
                 // =============================================
-                // Modals نظام الشخصيات
+                // Modals الشخصيات
                 // =============================================
 
                 if (
@@ -260,7 +293,24 @@ client.on(
                     )
                 ) {
 
-                    return await handleCharacterModals(
+                    if (
+                        typeof characterHandler.handleCharacterModals !==
+                        'function'
+                    ) {
+
+                        return await interaction.reply({
+
+                            content:
+                                '❌ نظام Modals الشخصيات غير متوفر.',
+
+                            flags:
+                                MessageFlags.Ephemeral
+
+                        });
+
+                    }
+
+                    return await characterHandler.handleCharacterModals(
                         interaction
                     );
 
@@ -268,7 +318,7 @@ client.on(
 
 
                 // =============================================
-                // باقي Modals النظام
+                // باقي Modals
                 // =============================================
 
                 return await handleModals(
@@ -281,14 +331,24 @@ client.on(
 
             console.error('');
             console.error(
+                '======================================'
+            );
+
+            console.error(
                 '❌ Interaction Error:'
             );
+
             console.error(error);
+
+            console.error(
+                '======================================'
+            );
+
             console.error('');
 
 
             // =================================================
-            // الرد على الخطأ
+            // إرسال رسالة الخطأ
             // =================================================
 
             try {
@@ -303,7 +363,8 @@ client.on(
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
 
-                        ephemeral: true
+                        flags:
+                            MessageFlags.Ephemeral
 
                     });
 
@@ -314,7 +375,8 @@ client.on(
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
 
-                        ephemeral: true
+                        flags:
+                            MessageFlags.Ephemeral
 
                     });
 
@@ -336,7 +398,7 @@ client.on(
 
 
 // =====================================================
-// أخطاء البوت
+// أخطاء Discord Client
 // =====================================================
 
 client.on(
