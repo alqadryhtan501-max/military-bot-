@@ -11,7 +11,6 @@ const {
 
 const citizens = require('../../utils/citizens');
 
-
 // =====================================================
 // لوحة الشخصيات
 // =====================================================
@@ -20,30 +19,40 @@ async function showCharactersMenu(interaction) {
 
     const userId = interaction.user.id;
 
+    // إنشاء حساب المستخدم إذا غير موجود
     citizens.createUser(userId);
 
     const characters = citizens.getCharacters(userId);
-    const active = citizens.getActiveCharacter(userId);
+    const activeCharacter = citizens.getActiveCharacter(userId);
 
-    let description = 'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
+    let description =
+        'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
 
     if (characters.length === 0) {
 
-        description += '❌ لا توجد لديك أي شخصية حالياً.\n\n';
-        description += 'اضغط على **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
+        description +=
+            '❌ لا توجد لديك أي شخصية حالياً.\n\n';
+
+        description +=
+            'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
 
     } else {
 
-        description += `👤 عدد الشخصيات: **${characters.length}**\n\n`;
+        description +=
+            `👤 عدد الشخصيات: **${characters.length}**\n\n`;
 
-        if (active) {
+        if (activeCharacter) {
 
-            description += `🟢 الشخصية الحالية: **${active.name}**\n`;
-            description += `🆔 الهوية: **${active.citizenId}**`;
+            description +=
+                `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
+
+            description +=
+                `🆔 الهوية: **${activeCharacter.citizenId}**`;
 
         } else {
 
-            description += '⚠️ لا توجد شخصية محددة حالياً.';
+            description +=
+                '⚠️ لا توجد شخصية محددة حالياً.';
 
         }
     }
@@ -91,25 +100,14 @@ async function showCharactersMenu(interaction) {
 
 async function handleCharacterButtons(interaction) {
 
-    const userId = interaction.user.id;
     const customId = interaction.customId;
+    const userId = interaction.user.id;
 
     // =================================================
     // إنشاء شخصية
     // =================================================
 
     if (customId === 'character_create') {
-
-        const characters = citizens.getCharacters(userId);
-
-        if (characters.length >= 3) {
-
-            return interaction.reply({
-                content: '❌ الحد الأقصى هو 3 شخصيات.',
-                flags: MessageFlags.Ephemeral
-            });
-
-        }
 
         const modal = new ModalBuilder()
             .setCustomId('character_create_modal')
@@ -148,7 +146,7 @@ async function handleCharacterButtons(interaction) {
 
 
     // =================================================
-    // شخصياتي
+    // عرض الشخصيات
     // =================================================
 
     if (customId === 'character_list') {
@@ -161,26 +159,33 @@ async function handleCharacterButtons(interaction) {
                 content: '❌ ما عندك أي شخصية حالياً.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
 
         let text = '👤 **شخصياتك:**\n\n';
 
-        for (let i = 0; i < characters.length; i++) {
+        characters.forEach((character, index) => {
 
-            const character = characters[i];
+            const active =
+                character.active
+                    ? ' 🟢 **الحالية**'
+                    : '';
 
-            const active = character.active
-                ? ' 🟢 **الحالية**'
-                : '';
+            text +=
+                `${index + 1}. **${character.name}**${active}\n`;
 
-            text += `${i + 1}. **${character.name}**${active}\n`;
-            text += `🆔 الهوية: \`${character.citizenId}\`\n`;
-            text += `🎂 العمر: ${character.age}\n`;
-            text += `💵 الكاش: ${Number(character.cash).toLocaleString()}\n`;
-            text += `🏦 البنك: ${Number(character.bank).toLocaleString()}\n`;
-            text += '\n';
-        }
+            text +=
+                `🆔 الهوية: \`${character.citizenId}\`\n`;
+
+            text +=
+                `🎂 العمر: ${character.age}\n`;
+
+            text +=
+                `💵 الكاش: ${character.cash}\n`;
+
+            text +=
+                `🏦 البنك: ${character.bank}\n\n`;
+
+        });
 
         return interaction.reply({
             content: text,
@@ -203,7 +208,6 @@ async function handleCharacterButtons(interaction) {
                 content: '❌ ما عندك أي شخصية تختارها.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
 
         const modal = new ModalBuilder()
@@ -213,7 +217,7 @@ async function handleCharacterButtons(interaction) {
         const idInput = new TextInputBuilder()
             .setCustomId('character_id')
             .setLabel('رقم الهوية')
-            .setPlaceholder('مثال: 12345')
+            .setPlaceholder('اكتب رقم هوية الشخصية')
             .setStyle(TextInputStyle.Short)
             .setRequired(true)
             .setMinLength(5)
@@ -226,6 +230,13 @@ async function handleCharacterButtons(interaction) {
 
         return interaction.showModal(modal);
     }
+
+
+    // إذا وصل زر غير معروف
+    return interaction.reply({
+        content: '❌ زر شخصيات غير معروف.',
+        flags: MessageFlags.Ephemeral
+    });
 }
 
 
@@ -235,8 +246,8 @@ async function handleCharacterButtons(interaction) {
 
 async function handleCharacterModals(interaction) {
 
-    const userId = interaction.user.id;
     const customId = interaction.customId;
+    const userId = interaction.user.id;
 
 
     // =================================================
@@ -255,40 +266,38 @@ async function handleCharacterModals(interaction) {
 
         const age = Number(ageText);
 
+
+        // التحقق من الاسم
         if (name.length < 2) {
 
             return interaction.reply({
-                content: '❌ الاسم قصير جداً.',
+                content: '❌ اسم الشخصية قصير جداً.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
 
-        if (!Number.isInteger(age) || age < 1 || age > 100) {
+
+        // التحقق من العمر
+        if (
+            !Number.isInteger(age) ||
+            age < 1 ||
+            age > 100
+        ) {
 
             return interaction.reply({
                 content: '❌ العمر غير صحيح.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
 
-        const characters = citizens.getCharacters(userId);
 
-        if (characters.length >= 3) {
-
-            return interaction.reply({
-                content: '❌ وصلت للحد الأقصى وهو 3 شخصيات.',
-                flags: MessageFlags.Ephemeral
-            });
-
-        }
-
+        // إنشاء الشخصية
         const character = citizens.createCharacter(
             userId,
             name,
             age
         );
+
 
         if (!character) {
 
@@ -296,19 +305,18 @@ async function handleCharacterModals(interaction) {
                 content: '❌ تعذر إنشاء الشخصية.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
+
 
         return interaction.reply({
 
             content:
-                '✅ **تم إنشاء الشخصية بنجاح!**\n\n' +
+                `✅ **تم إنشاء الشخصية بنجاح!**\n\n` +
                 `👤 الاسم: **${character.name}**\n` +
                 `🎂 العمر: **${character.age}**\n` +
                 `🆔 رقم الهوية: **${character.citizenId}**\n\n` +
-                `💵 الكاش: **${Number(character.cash).toLocaleString()}**\n` +
-                `🏦 البنك: **${Number(character.bank).toLocaleString()}**\n\n` +
-                `${character.active ? '🟢 أصبحت هذه الشخصية شخصيتك الحالية.' : ''}`,
+                `💵 الكاش: **${character.cash}**\n` +
+                `🏦 البنك: **${character.bank}**`,
 
             flags: MessageFlags.Ephemeral
 
@@ -317,7 +325,7 @@ async function handleCharacterModals(interaction) {
 
 
     // =================================================
-    // اختيار الشخصية
+    // اختيار شخصية
     // =================================================
 
     if (customId === 'character_select_modal') {
@@ -326,67 +334,76 @@ async function handleCharacterModals(interaction) {
             .getTextInputValue('character_id')
             .trim();
 
-        if (!/^\d{5}$/.test(citizenId)) {
-
-            return interaction.reply({
-                content: '❌ رقم الهوية يجب أن يكون 5 أرقام.',
-                flags: MessageFlags.Ephemeral
-            });
-
-        }
 
         const characters = citizens.getCharacters(userId);
 
+
         const character = characters.find(
-            item =>
-                String(item.citizenId) === String(citizenId)
+            character =>
+                String(character.citizenId) ===
+                String(citizenId)
         );
+
 
         if (!character) {
 
             return interaction.reply({
-                content: '❌ هذه الشخصية غير موجودة في حسابك.',
+                content:
+                    '❌ هذه الشخصية غير موجودة في حسابك.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
+
 
         const selected = citizens.setActiveCharacter(
             userId,
             citizenId
         );
 
+
         if (!selected) {
 
             return interaction.reply({
-                content: '❌ تعذر اختيار الشخصية.',
+                content:
+                    '❌ تعذر اختيار الشخصية.',
                 flags: MessageFlags.Ephemeral
             });
-
         }
+
 
         return interaction.reply({
 
             content:
-                '🟢 **تم اختيار الشخصية بنجاح!**\n\n' +
+                `🟢 **تم اختيار الشخصية بنجاح!**\n\n` +
                 `👤 الشخصية الحالية: **${selected.name}**\n` +
                 `🆔 رقم الهوية: **${selected.citizenId}**\n\n` +
-                `💵 الكاش: **${Number(selected.cash).toLocaleString()}**\n` +
-                `🏦 البنك: **${Number(selected.bank).toLocaleString()}**`,
+                `💵 الكاش: **${selected.cash}**\n` +
+                `🏦 البنك: **${selected.bank}**`,
 
             flags: MessageFlags.Ephemeral
 
         });
     }
+
+
+    // إذا وصل Modal غير معروف
+    return interaction.reply({
+        content: '❌ نموذج شخصيات غير معروف.',
+        flags: MessageFlags.Ephemeral
+    });
 }
 
 
 // =====================================================
-// تصدير الدوال
+// التصدير
 // =====================================================
 
 module.exports = {
+
     showCharactersMenu,
+
     handleCharacterButtons,
+
     handleCharacterModals
+
 };
