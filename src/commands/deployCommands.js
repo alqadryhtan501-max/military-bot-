@@ -9,18 +9,30 @@ const {
 
 const commands = [
 
-    // =====================================================
-    // لوحة النظام
-    // =====================================================
+    // ================================
+    // لوحات الأنظمة
+    // ================================
 
     new SlashCommandBuilder()
-        .setName('setup-panel')
-        .setDescription('إرسال لوحات النظام'),
+        .setName('setup-duty')
+        .setDescription('إرسال لوحة الميدان'),
+
+    new SlashCommandBuilder()
+        .setName('setup-citizens')
+        .setDescription('إرسال لوحة المواطنين'),
+
+    new SlashCommandBuilder()
+        .setName('setup-services')
+        .setDescription('إرسال لوحة المخالفات والخدمات'),
+
+    new SlashCommandBuilder()
+        .setName('setup-bank')
+        .setDescription('إرسال لوحة البنك'),
 
 
-    // =====================================================
-    // أوامر إدارة البنك
-    // =====================================================
+    // ================================
+    // أوامر البنك الإدارية
+    // ================================
 
     new SlashCommandBuilder()
         .setName('give')
@@ -28,7 +40,7 @@ const commands = [
         .addStringOption(option =>
             option
                 .setName('id')
-                .setDescription('رقم هوية المستلم')
+                .setDescription('رقم هوية المواطن')
                 .setRequired(true)
         )
         .addNumberOption(option =>
@@ -38,14 +50,10 @@ const commands = [
                 .setRequired(true)
                 .setMinValue(1)
         ),
-
 
     new SlashCommandBuilder()
         .setName('bank-give')
-        .setDescription('إضافة فلوس إلى بنك مواطن')
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator.toString()
-        )
+        .setDescription('إضافة مبلغ إلى بنك مواطن')
         .addStringOption(option =>
             option
                 .setName('id')
@@ -59,14 +67,10 @@ const commands = [
                 .setRequired(true)
                 .setMinValue(1)
         ),
-
 
     new SlashCommandBuilder()
         .setName('bank-take')
-        .setDescription('خصم فلوس من بنك مواطن')
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator.toString()
-        )
+        .setDescription('سحب مبلغ من بنك مواطن')
         .addStringOption(option =>
             option
                 .setName('id')
@@ -80,14 +84,10 @@ const commands = [
                 .setRequired(true)
                 .setMinValue(1)
         ),
-
 
     new SlashCommandBuilder()
         .setName('bank-reset')
         .setDescription('تصفير حساب مواطن')
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator.toString()
-        )
         .addStringOption(option =>
             option
                 .setName('id')
@@ -95,13 +95,9 @@ const commands = [
                 .setRequired(true)
         ),
 
-
     new SlashCommandBuilder()
         .setName('bank-set')
         .setDescription('تحديد رصيد بنك مواطن')
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator.toString()
-        )
         .addStringOption(option =>
             option
                 .setName('id')
@@ -116,13 +112,9 @@ const commands = [
                 .setMinValue(0)
         ),
 
-
     new SlashCommandBuilder()
         .setName('bank-info')
         .setDescription('عرض كشف حساب مواطن')
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator.toString()
-        )
         .addStringOption(option =>
             option
                 .setName('id')
@@ -133,9 +125,12 @@ const commands = [
 ].map(command => command.toJSON());
 
 
+// ================================
+// تسجيل الأوامر
+// ================================
+
 const rest = new REST({ version: '10' })
     .setToken(process.env.DISCORD_TOKEN);
-
 
 async function deployCommands() {
 
@@ -153,11 +148,11 @@ async function deployCommands() {
             }
         );
 
-        console.log('تم تسجيل الأوامر في السيرفر بنجاح ✅');
+        console.log('تم تسجيل الأوامر بنجاح ✅');
 
     } catch (error) {
 
-        console.error('حدث خطأ أثناء تسجيل الأوامر:');
+        console.error('❌ حدث خطأ:');
         console.error(error);
 
     }
