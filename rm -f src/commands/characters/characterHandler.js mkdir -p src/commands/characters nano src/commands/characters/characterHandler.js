@@ -66,6 +66,7 @@ async function showCharactersMenu(interaction) {
     const row = new ActionRowBuilder();
 
     row.addComponents(
+
         new ButtonBuilder()
             .setCustomId('character_create')
             .setLabel('إنشاء شخصية')
@@ -83,6 +84,7 @@ async function showCharactersMenu(interaction) {
             .setLabel('اختيار شخصية')
             .setEmoji('🔄')
             .setStyle(ButtonStyle.Secondary)
+
     );
 
     return interaction.reply({
@@ -101,6 +103,8 @@ async function handleCharacterButtons(interaction) {
     const customId = interaction.customId;
     const userId = interaction.user.id;
 
+
+    // إنشاء شخصية
     if (customId === 'character_create') {
 
         const modal = new ModalBuilder()
@@ -126,18 +130,20 @@ async function handleCharacterButtons(interaction) {
             .setMaxLength(3);
 
         modal.addComponents(
-            new ActionRowBuilder().addComponents(nameInput),
-            new ActionRowBuilder().addComponents(ageInput)
+
+            new ActionRowBuilder()
+                .addComponents(nameInput),
+
+            new ActionRowBuilder()
+                .addComponents(ageInput)
+
         );
 
         return interaction.showModal(modal);
     }
 
 
-    // =================================================
-    // قائمة الشخصيات
-    // =================================================
-
+    // عرض الشخصيات
     if (customId === 'character_list') {
 
         const characters = citizens.getCharacters(userId);
@@ -172,6 +178,7 @@ async function handleCharacterButtons(interaction) {
 
             text +=
                 `🏦 البنك: ${character.bank}\n\n`;
+
         });
 
         return interaction.reply({
@@ -181,10 +188,7 @@ async function handleCharacterButtons(interaction) {
     }
 
 
-    // =================================================
-    // اختيار شخصية
-    // =================================================
-
+    // اختيار الشخصية
     if (customId === 'character_select') {
 
         const characters = citizens.getCharacters(userId);
@@ -211,7 +215,8 @@ async function handleCharacterButtons(interaction) {
             .setMaxLength(5);
 
         modal.addComponents(
-            new ActionRowBuilder().addComponents(idInput)
+            new ActionRowBuilder()
+                .addComponents(idInput)
         );
 
         return interaction.showModal(modal);
@@ -235,10 +240,7 @@ async function handleCharacterModals(interaction) {
     const userId = interaction.user.id;
 
 
-    // =================================================
     // إنشاء شخصية
-    // =================================================
-
     if (customId === 'character_create_modal') {
 
         const name = interaction.fields
@@ -252,6 +254,7 @@ async function handleCharacterModals(interaction) {
         const age = Number(ageText);
 
 
+        // التحقق من الاسم
         if (name.length < 2) {
 
             return interaction.reply({
@@ -261,7 +264,12 @@ async function handleCharacterModals(interaction) {
         }
 
 
-        if (!Number.isInteger(age) || age < 1 || age > 100) {
+        // التحقق من العمر
+        if (
+            !Number.isInteger(age) ||
+            age < 1 ||
+            age > 100
+        ) {
 
             return interaction.reply({
                 content: '❌ العمر غير صحيح.',
@@ -270,6 +278,7 @@ async function handleCharacterModals(interaction) {
         }
 
 
+        // إنشاء الشخصية
         const character = citizens.createCharacter(
             userId,
             name,
@@ -297,14 +306,12 @@ async function handleCharacterModals(interaction) {
                 `🏦 البنك: **${character.bank}**`,
 
             flags: MessageFlags.Ephemeral
+
         });
     }
 
 
-    // =================================================
-    // اختيار شخصية
-    // =================================================
-
+    // اختيار الشخصية
     if (customId === 'character_select_modal') {
 
         const citizenId = interaction.fields
@@ -355,6 +362,7 @@ async function handleCharacterModals(interaction) {
                 `🏦 البنك: **${selected.bank}**`,
 
             flags: MessageFlags.Ephemeral
+
         });
     }
 
@@ -367,7 +375,7 @@ async function handleCharacterModals(interaction) {
 
 
 // =====================================================
-// التصدير
+// تصدير النظام
 // =====================================================
 
 module.exports = {
