@@ -1,327 +1,404 @@
 const {
-EmbedBuilder,
-ModalBuilder,
-TextInputBuilder,
-TextInputStyle,
-ActionRowBuilder
+    EmbedBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    ActionRowBuilder,
+    MessageFlags
 } = require('discord.js');
 
+// =====================================================
 // قائمة المتواجدين في الميدان
-// ملاحظة: هذه القائمة مؤقتة وتختفي عند إعادة تشغيل البوت.
-// لاحقًا نربطها بقاعدة البيانات.
+// =====================================================
+
 if (!global.activeDutyList) {
-global.activeDutyList = [];
+    global.activeDutyList = [];
 }
+
+// =====================================================
+// التعامل مع الأزرار
+// =====================================================
 
 async function handleButtons(interaction) {
-const member = interaction.member;
 
-if (!member) {
-    return interaction.reply({
-        content: '❌ تعذر العثور على بيانات العضو.',
-        ephemeral: true
-    });
-}
+    const member = interaction.member;
 
-const memberDisplayName = member.displayName || interaction.user.username;
-const userId = interaction.user.id;
-
-// =====================================================
-// 1. تسجيل دخول الميدان
-// =====================================================
-if (interaction.customId === 'btn_duty_on') {
-
-    const alreadyOnDuty = global.activeDutyList.some(
-        officer => officer.userId === userId
-    );
-
-    if (alreadyOnDuty) {
+    if (!member) {
         return interaction.reply({
-            content: '❌ أنت مسجل دخول في الميدان بالفعل!',
-            ephemeral: true
+            content: '❌ تعذر العثور على بيانات العضو.',
+            flags: MessageFlags.Ephemeral
         });
     }
 
-    global.activeDutyList.push({
-        userId: userId,
-        name: memberDisplayName,
-        joinedAt: Date.now()
-    });
+    const memberDisplayName =
+        member.displayName || interaction.user.username;
 
-    await updateDutyEmbed(interaction);
+    const userId = interaction.user.id;
 
-    return interaction.reply({
-        content: '🟢 تم تسجيل دخولك للميدان بنجاح.',
-        ephemeral: true
-    });
-}
+    // =====================================================
+    // 1. تسجيل دخول الميدان
+    // =====================================================
 
-// =====================================================
-// 2. تسجيل خروج من الميدان
-// =====================================================
-if (interaction.customId === 'btn_duty_off') {
+    if (interaction.customId === 'btn_duty_on') {
 
-    const officerIndex = global.activeDutyList.findIndex(
-        officer => officer.userId === userId
-    );
+        const alreadyOnDuty = global.activeDutyList.some(
+            officer => officer.userId === userId
+        );
 
-    if (officerIndex === -1) {
-        return interaction.reply({
-            content: '❌ أنت غير مسجل في الميدان حالياً!',
-            ephemeral: true
+        if (alreadyOnDuty) {
+            return interaction.reply({
+                content: '❌ أنت مسجل دخول في الميدان بالفعل!',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        global.activeDutyList.push({
+            userId: userId,
+            name: memberDisplayName,
+            joinedAt: Date.now()
         });
+
+        // الرد أولاً على الزر حتى لا ينتهي الـ Interaction
+        await interaction.reply({
+            content: '🟢 تم تسجيل دخولك للميدان بنجاح.',
+            flags: MessageFlags.Ephemeral
+        });
+
+        // تحديث القائمة بعد الرد
+        try {
+            await updateDutyEmbed(interaction);
+        } catch (error) {
+            console.error(
+                '❌ خطأ في تحديث قائمة الميدان:',
+                error
+            );
+        }
+
+        return;
     }
 
-    global.activeDutyList.splice(officerIndex, 1);
+    // =====================================================
+    // 2. تسجيل خروج من الميدان
+    // =====================================================
 
-    await updateDutyEmbed(interaction);
+    if (interaction.customId === 'btn_duty_off') {
 
-    return interaction.reply({
-        content: '🔴 تم تسجيل خروجك من الميدان.',
-        ephemeral: true
-    });
-}
+        const officerIndex =
+            global.activeDutyList.findIndex(
+                officer => officer.userId === userId
+            );
 
-// =====================================================
-// 3. إنشاء هوية
-// =====================================================
-if (interaction.customId === 'btn_register') {
+        if (officerIndex === -1) {
+            return interaction.reply({
+                content: '❌ أنت غير مسجل في الميدان حالياً!',
+                flags: MessageFlags.Ephemeral
+            });
+        }
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_register')
-        .setTitle('🆔 إصدار هوية جديدة');
+        global.activeDutyList.splice(
+            officerIndex,
+            1
+        );
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('name_input')
-                .setLabel('الاسم الثلاثي / الشخصية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(100)
-        ),
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('age_input')
-                .setLabel('العمر')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMinLength(1)
-                .setMaxLength(3)
-        )
-    );
+        // الرد أولاً
+        await interaction.reply({
+            content: '🔴 تم تسجيل خروجك من الميدان.',
+            flags: MessageFlags.Ephemeral
+        });
 
-    return interaction.showModal(modal);
-}
+        // ثم تحديث القائمة
+        try {
+            await updateDutyEmbed(interaction);
+        } catch (error) {
+            console.error(
+                '❌ خطأ في تحديث قائمة الميدان:',
+                error
+            );
+        }
 
-// =====================================================
-// 4. إصدار مخالفة
-// =====================================================
-if (interaction.customId === 'btn_fine') {
+        return;
+    }
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_fine')
-        .setTitle('🧾 إصدار مخالفة');
+    // =====================================================
+    // 3. إنشاء هوية
+    // =====================================================
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('id_input')
-                .setLabel('رقم الهوية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(20)
-        ),
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('reason_input')
-                .setLabel('سبب المخالفة')
-                .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
-                .setMaxLength(500)
-        ),
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('amount_input')
-                .setLabel('مبلغ المخالفة')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(10)
-        )
-    );
+    if (interaction.customId === 'btn_register') {
 
-    return interaction.showModal(modal);
-}
+        const modal = new ModalBuilder()
+            .setCustomId('modal_register')
+            .setTitle('🆔 إصدار هوية جديدة');
 
-// =====================================================
-// 5. إيقاف خدمات
-// =====================================================
-if (interaction.customId === 'btn_suspend') {
+        modal.addComponents(
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_suspend')
-        .setTitle('⛔ إيقاف خدمات');
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('name_input')
+                    .setLabel('الاسم الثلاثي / الشخصية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(100)
+            ),
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('id_input')
-                .setLabel('رقم الهوية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(20)
-        ),
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('reason_input')
-                .setLabel('السبب')
-                .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
-                .setMaxLength(500)
-        )
-    );
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('age_input')
+                    .setLabel('العمر')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMinLength(1)
+                    .setMaxLength(3)
+            )
 
-    return interaction.showModal(modal);
-}
+        );
 
-// =====================================================
-// 6. تفعيل خدمات
-// =====================================================
-if (interaction.customId === 'btn_activate') {
+        return interaction.showModal(modal);
+    }
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_activate')
-        .setTitle('✅ تفعيل خدمات');
+    // =====================================================
+    // 4. إصدار مخالفة
+    // =====================================================
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('id_input')
-                .setLabel('رقم الهوية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(20)
-        ),
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('reason_input')
-                .setLabel('السبب')
-                .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
-                .setMaxLength(500)
-        )
-    );
+    if (interaction.customId === 'btn_fine') {
 
-    return interaction.showModal(modal);
-}
+        const modal = new ModalBuilder()
+            .setCustomId('modal_fine')
+            .setTitle('🧾 إصدار مخالفة');
 
-// =====================================================
-// 7. استعلام عن مواطن
-// =====================================================
-if (interaction.customId === 'btn_search') {
+        modal.addComponents(
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_search')
-        .setTitle('🔎 استعلام عن مواطن');
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('id_input')
+                    .setLabel('رقم الهوية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(20)
+            ),
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('id_input')
-                .setLabel('رقم الهوية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(20)
-        )
-    );
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('reason_input')
+                    .setLabel('سبب المخالفة')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+                    .setMaxLength(500)
+            ),
 
-    return interaction.showModal(modal);
-}
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('amount_input')
+                    .setLabel('مبلغ المخالفة')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(10)
+            )
 
-// =====================================================
-// 8. سجل المواطن
-// =====================================================
-if (interaction.customId === 'btn_history') {
+        );
 
-    const modal = new ModalBuilder()
-        .setCustomId('modal_history')
-        .setTitle('📋 سجل المواطن');
+        return interaction.showModal(modal);
+    }
 
-    modal.addComponents(
-        new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId('id_input')
-                .setLabel('رقم الهوية')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(20)
-        )
-    );
+    // =====================================================
+    // 5. إيقاف خدمات
+    // =====================================================
 
-    return interaction.showModal(modal);
-}
+    if (interaction.customId === 'btn_suspend') {
 
+        const modal = new ModalBuilder()
+            .setCustomId('modal_suspend')
+            .setTitle('⛔ إيقاف خدمات');
+
+        modal.addComponents(
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('id_input')
+                    .setLabel('رقم الهوية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(20)
+            ),
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('reason_input')
+                    .setLabel('السبب')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+                    .setMaxLength(500)
+            )
+
+        );
+
+        return interaction.showModal(modal);
+    }
+
+    // =====================================================
+    // 6. تفعيل خدمات
+    // =====================================================
+
+    if (interaction.customId === 'btn_activate') {
+
+        const modal = new ModalBuilder()
+            .setCustomId('modal_activate')
+            .setTitle('✅ تفعيل خدمات');
+
+        modal.addComponents(
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('id_input')
+                    .setLabel('رقم الهوية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(20)
+            ),
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('reason_input')
+                    .setLabel('السبب')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+                    .setMaxLength(500)
+            )
+
+        );
+
+        return interaction.showModal(modal);
+    }
+
+    // =====================================================
+    // 7. استعلام عن مواطن
+    // =====================================================
+
+    if (interaction.customId === 'btn_search') {
+
+        const modal = new ModalBuilder()
+            .setCustomId('modal_search')
+            .setTitle('🔎 استعلام عن مواطن');
+
+        modal.addComponents(
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('id_input')
+                    .setLabel('رقم الهوية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(20)
+            )
+
+        );
+
+        return interaction.showModal(modal);
+    }
+
+    // =====================================================
+    // 8. سجل المواطن
+    // =====================================================
+
+    if (interaction.customId === 'btn_history') {
+
+        const modal = new ModalBuilder()
+            .setCustomId('modal_history')
+            .setTitle('📋 سجل المواطن');
+
+        modal.addComponents(
+
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('id_input')
+                    .setLabel('رقم الهوية')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(20)
+            )
+
+        );
+
+        return interaction.showModal(modal);
+    }
 }
 
 // =====================================================
 // تحديث قائمة الشرطة
 // =====================================================
+
 async function updateDutyEmbed(interaction) {
 
-const guildIcon = interaction.guild?.iconURL({
-    extension: 'png',
-    size: 256
-}) || null;
+    const guildIcon =
+        interaction.guild?.iconURL({
+            extension: 'png',
+            size: 256
+        }) || null;
 
-let listContent = 'لا يوجد أحد بالميدان حالياً.';
+    let listContent =
+        'لا يوجد أحد بالميدان حالياً.';
 
-if (global.activeDutyList.length > 0) {
+    if (global.activeDutyList.length > 0) {
 
-    listContent = global.activeDutyList
-        .map((officer, index) => {
-            return `${index + 1} - ${officer.name} 🟢`;
+        listContent =
+            global.activeDutyList
+                .map((officer, index) => {
+                    return `${index + 1} - ${officer.name} 🟢`;
+                })
+                .join('\n');
+    }
+
+    const liveEmbed = new EmbedBuilder()
+        .setTitle('# - Police List')
+        .setDescription(listContent)
+        .setColor('#2b2d31')
+        .setThumbnail(guildIcon)
+        .setFooter({
+            text: `عدد المتواجدين: ${global.activeDutyList.length}`
         })
-        .join('\n');
-}
+        .setTimestamp();
 
-const liveEmbed = new EmbedBuilder()
-    .setTitle('# - Police List')
-    .setDescription(listContent)
-    .setColor('#2b2d31')
-    .setThumbnail(guildIcon)
-    .setFooter({
-        text: `عدد المتواجدين: ${global.activeDutyList.length}`
-    })
-    .setTimestamp();
+    // =====================================================
+    // تحديث الرسالة الحالية
+    // =====================================================
 
-// إذا كانت الرسالة السابقة موجودة نحاول تحديثها
-if (global.dutyMessage) {
+    if (global.dutyMessage) {
 
-    try {
+        try {
 
-        await global.dutyMessage.edit({
+            await global.dutyMessage.edit({
+                embeds: [liveEmbed]
+            });
+
+            return;
+
+        } catch (error) {
+
+            console.log(
+                '⚠️ تعذر تعديل رسالة Police List، سيتم إنشاء رسالة جديدة.'
+            );
+
+            global.dutyMessage = null;
+        }
+    }
+
+    // =====================================================
+    // إنشاء رسالة جديدة
+    // =====================================================
+
+    if (!interaction.channel) {
+        return;
+    }
+
+    global.dutyMessage =
+        await interaction.channel.send({
             embeds: [liveEmbed]
         });
-
-        return;
-
-    } catch (error) {
-
-        console.log(
-            'تعذر تعديل رسالة Police List، سيتم إنشاء رسالة جديدة.'
-        );
-
-        global.dutyMessage = null;
-    }
 }
 
-// إنشاء رسالة جديدة
-global.dutyMessage = await interaction.channel.send({
-    embeds: [liveEmbed]
-});
-
-}
+// =====================================================
+// التصدير
+// =====================================================
 
 module.exports = {
-handleButtons
+    handleButtons
 };
