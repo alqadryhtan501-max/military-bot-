@@ -5,162 +5,120 @@ const {
     ButtonStyle,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    MessageFlags
 } = require('discord.js');
 
-const database = require('../../utils/citizens');
-
-const {
-    createUser,
-    getCharacters,
-    getActiveCharacter,
-    setActiveCharacter,
-    createCharacter,
-    deleteCharacter
-} = database;
+const citizens = require('../../utils/citizens');
 
 
 // =====================================================
-// لوحة الشخصيات
+// إرسال لوحة الشخصيات
 // =====================================================
 
 async function showCharactersMenu(interaction) {
 
-    const discordId = interaction.user.id;
+    const userId = interaction.user.id;
 
     // إنشاء حساب المستخدم إذا غير موجود
-    createUser(discordId);
+    citizens.createUser(userId);
 
-    const characters = getCharacters(discordId);
+    const characters =
+        citizens.getCharacters(userId);
 
-    const activeCharacter = getActiveCharacter(discordId);
+    const activeCharacter =
+        citizens.getActiveCharacter(userId);
 
 
     // =================================================
-    // لا توجد شخصيات
+    // وصف اللوحة
     // =================================================
+
+    let description =
+        'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
+
 
     if (characters.length === 0) {
 
-        const embed = new EmbedBuilder()
-            .setTitle('🆔 نظام الشخصيات')
-            .setDescription(
-                'ليس لديك أي شخصية حتى الآن.\n\n' +
-                'اضغط على **إنشاء شخصية** لإنشاء شخصيتك.'
-            )
-            .setColor('#2b2d31')
-            .setTimestamp();
+        description +=
+            '❌ لا توجد لديك أي شخصية حالياً.\n\n';
 
-        const row = new ActionRowBuilder()
-            .addComponents(
+        description +=
+            'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
 
-                new ButtonBuilder()
-                    .setCustomId('character_create')
-                    .setLabel('إنشاء شخصية')
-                    .setEmoji('➕')
-                    .setStyle(ButtonStyle.Success)
+    } else {
 
-            );
+        description +=
+            `👤 عدد الشخصيات: **${characters.length}**\n\n`;
 
-        return interaction.reply({
-            embeds: [embed],
-            components: [row],
-            ephemeral: true
-        });
+        if (activeCharacter) {
+
+            description +=
+                `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
+
+            description +=
+                `🆔 الهوية: **${activeCharacter.citizenId}**`;
+
+        }
+
     }
 
 
     // =================================================
-    // عرض الشخصيات
+    // Embed
     // =================================================
 
-    let description = '';
-
-    characters.forEach((character, index) => {
-
-        const active =
-            activeCharacter &&
-            String(character.citizenId) ===
-            String(activeCharacter.citizenId);
-
-        description +=
-            `### ${index + 1} - ${character.name}\n`;
-
-        description +=
-            `🆔 الهوية: \`${character.citizenId}\`\n`;
-
-        description +=
-            `🎂 العمر: ${character.age}\n`;
-
-        description +=
-            `💵 الكاش: ${Number(character.cash || 0).toLocaleString()} ريال\n`;
-
-        description +=
-            `🏦 البنك: ${Number(character.bank || 0).toLocaleString()} ريال\n`;
-
-        description +=
-            active
-                ? '🟢 **الشخصية الحالية**\n\n'
-                : '⚪ غير نشطة\n\n';
-
-    });
-
-
-    const embed = new EmbedBuilder()
-        .setTitle('🆔 نظام الشخصيات')
-        .setDescription(description)
-        .setColor('#2b2d31')
-        .setFooter({
-            text: `عدد الشخصيات: ${characters.length}`
-        })
-        .setTimestamp();
+    const embed =
+        new EmbedBuilder()
+            .setTitle('🆔 نظام الشخصيات')
+            .setDescription(description)
+            .setColor('#2b2d31')
+            .setTimestamp();
 
 
     // =================================================
-    // أزرار اللوحة
+    // أزرار
     // =================================================
 
-    const row1 = new ActionRowBuilder()
-        .addComponents(
-
-            new ButtonBuilder()
-                .setCustomId('character_create')
-                .setLabel('إنشاء شخصية')
-                .setEmoji('➕')
-                .setStyle(ButtonStyle.Success),
-
-            new ButtonBuilder()
-                .setCustomId('character_select')
-                .setLabel('اختيار شخصية')
-                .setEmoji('🔄')
-                .setStyle(ButtonStyle.Primary),
-
-            new ButtonBuilder()
-                .setCustomId('character_info')
-                .setLabel('معلومات الشخصية')
-                .setEmoji('📋')
-                .setStyle(ButtonStyle.Secondary)
-
-        );
+    const row =
+        new ActionRowBuilder();
 
 
-    const row2 = new ActionRowBuilder()
-        .addComponents(
+    row.addComponents(
 
-            new ButtonBuilder()
-                .setCustomId('character_delete')
-                .setLabel('حذف شخصية')
-                .setEmoji('🗑️')
-                .setStyle(ButtonStyle.Danger)
+        new ButtonBuilder()
+            .setCustomId('character_create')
+            .setLabel('إنشاء شخصية')
+            .setEmoji('➕')
+            .setStyle(ButtonStyle.Success),
 
-        );
+        new ButtonBuilder()
+            .setCustomId('character_list')
+            .setLabel('شخصياتي')
+            .setEmoji('👤')
+            .setStyle(ButtonStyle.Primary),
+
+        new ButtonBuilder()
+            .setCustomId('character_select')
+            .setLabel('اختيار شخصية')
+            .setEmoji('🔄')
+            .setStyle(ButtonStyle.Secondary)
+
+    );
 
 
-    return interaction.reply({
+    // =================================================
+    // إرسال اللوحة
+    // =================================================
+
+    return await interaction.reply({
+
         embeds: [embed],
-        components: [row1, row2],
-        ephemeral: true
+
+        components: [row]
+
     });
+
 }
 
 
@@ -170,51 +128,159 @@ async function showCharactersMenu(interaction) {
 
 async function handleCharacterButtons(interaction) {
 
-    const discordId = interaction.user.id;
+    const customId =
+        interaction.customId;
+
+    const userId =
+        interaction.user.id;
+
 
     // =================================================
     // إنشاء شخصية
     // =================================================
 
-    if (interaction.customId === 'character_create') {
+    if (
+        customId ===
+        'character_create'
+    ) {
 
-        const modal = new ModalBuilder()
-            .setCustomId('character_create_modal')
-            .setTitle('🆔 إنشاء شخصية');
-
-
-        const nameInput = new TextInputBuilder()
-            .setCustomId('character_name')
-            .setLabel('اسم الشخصية')
-            .setPlaceholder('مثال: محمد عبدالله')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMinLength(2)
-            .setMaxLength(100);
+        const modal =
+            new ModalBuilder()
+                .setCustomId(
+                    'character_create_modal'
+                )
+                .setTitle('🆔 إنشاء شخصية');
 
 
-        const ageInput = new TextInputBuilder()
-            .setCustomId('character_age')
-            .setLabel('العمر')
-            .setPlaceholder('مثال: 25')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMinLength(1)
-            .setMaxLength(3);
+        const nameInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_name'
+                )
+                .setLabel('اسم الشخصية')
+                .setPlaceholder(
+                    'مثال: محمد أحمد'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(2)
+                .setMaxLength(50);
+
+
+        const ageInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_age'
+                )
+                .setLabel('العمر')
+                .setPlaceholder(
+                    'مثال: 25'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(3);
 
 
         modal.addComponents(
 
             new ActionRowBuilder()
-                .addComponents(nameInput),
+                .addComponents(
+                    nameInput
+                ),
 
             new ActionRowBuilder()
-                .addComponents(ageInput)
+                .addComponents(
+                    ageInput
+                )
 
         );
 
 
-        return interaction.showModal(modal);
+        return await interaction.showModal(
+            modal
+        );
+
+    }
+
+
+    // =================================================
+    // عرض الشخصيات
+    // =================================================
+
+    if (
+        customId ===
+        'character_list'
+    ) {
+
+        const characters =
+            citizens.getCharacters(userId);
+
+
+        if (
+            characters.length === 0
+        ) {
+
+            return await interaction.reply({
+
+                content:
+                    '❌ ما عندك أي شخصية حالياً.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+
+        }
+
+
+        let text =
+            '👤 **شخصياتك:**\n\n';
+
+
+        characters.forEach(
+            (character, index) => {
+
+                const active =
+                    character.active
+                        ? ' 🟢 **الحالية**'
+                        : '';
+
+                text +=
+                    `${index + 1}. **${character.name}**\n`;
+
+                text +=
+                    `🆔 الهوية: \`${character.citizenId}\`\n`;
+
+                text +=
+                    `🎂 العمر: ${character.age}\n`;
+
+                text +=
+                    `💵 الكاش: ${character.cash}\n`;
+
+                text +=
+                    `🏦 البنك: ${character.bank}\n`;
+
+                text +=
+                    `${active}\n\n`;
+
+            }
+        );
+
+
+        return await interaction.reply({
+
+            content: text,
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+
     }
 
 
@@ -222,318 +288,91 @@ async function handleCharacterButtons(interaction) {
     // اختيار شخصية
     // =================================================
 
-    if (interaction.customId === 'character_select') {
-
-        const characters = getCharacters(discordId);
-
-        if (!characters.length) {
-
-            return interaction.reply({
-                content: '❌ لا توجد لديك شخصيات.',
-                ephemeral: true
-            });
-        }
-
-
-        const rows = [];
-
-        let row = new ActionRowBuilder();
-
-
-        characters.forEach((character, index) => {
-
-            row.addComponents(
-
-                new ButtonBuilder()
-                    .setCustomId(
-                        `character_select_${character.citizenId}`
-                    )
-                    .setLabel(character.name)
-                    .setEmoji('🆔')
-                    .setStyle(ButtonStyle.Primary)
-
-            );
-
-
-            if (
-                row.components.length === 5 ||
-                index === characters.length - 1
-            ) {
-
-                rows.push(row);
-
-                row = new ActionRowBuilder();
-
-            }
-
-        });
-
-
-        return interaction.reply({
-
-            content:
-                '🔄 اختر الشخصية التي تريد استخدامها:',
-
-            components: rows,
-
-            ephemeral: true
-
-        });
-    }
-
-
-    // =================================================
-    // تفعيل شخصية
-    // =================================================
-
     if (
-        interaction.customId.startsWith(
-            'character_select_'
-        )
+        customId ===
+        'character_select'
     ) {
-
-        const citizenId =
-            interaction.customId.replace(
-                'character_select_',
-                ''
-            );
-
-
-        const character =
-            setActiveCharacter(
-                discordId,
-                citizenId
-            );
-
-
-        if (!character) {
-
-            return interaction.reply({
-                content:
-                    '❌ لم يتم العثور على الشخصية.',
-                ephemeral: true
-            });
-        }
-
-
-        return interaction.update({
-
-            content:
-                `🟢 **تم تغيير الشخصية بنجاح**\n\n` +
-
-                `👤 الاسم: **${character.name}**\n` +
-
-                `🆔 الهوية: \`${character.citizenId}\`\n` +
-
-                `🎂 العمر: ${character.age}\n` +
-
-                `💵 الكاش: ${Number(character.cash || 0).toLocaleString()} ريال\n` +
-
-                `🏦 البنك: ${Number(character.bank || 0).toLocaleString()} ريال`,
-
-            embeds: [],
-
-            components: []
-
-        });
-    }
-
-
-    // =================================================
-    // معلومات الشخصية الحالية
-    // =================================================
-
-    if (interaction.customId === 'character_info') {
-
-        const character =
-            getActiveCharacter(discordId);
-
-
-        if (!character) {
-
-            return interaction.reply({
-                content:
-                    '❌ لا توجد شخصية نشطة.',
-                ephemeral: true
-            });
-        }
-
-
-        const fines =
-            Array.isArray(character.fines)
-                ? character.fines.length
-                : 0;
-
-
-        const embed = new EmbedBuilder()
-            .setTitle('📋 معلومات الشخصية')
-            .setDescription(
-
-                `👤 **الاسم:** ${character.name}\n` +
-
-                `🆔 **رقم الهوية:** \`${character.citizenId}\`\n` +
-
-                `🎂 **العمر:** ${character.age}\n\n` +
-
-                `💵 **الكاش:** ${Number(character.cash || 0).toLocaleString()} ريال\n` +
-
-                `🏦 **البنك:** ${Number(character.bank || 0).toLocaleString()} ريال\n\n` +
-
-                `💼 **الوظيفة:** ${character.job || 'لا يوجد'}\n` +
-
-                `⭐ **الرتبة:** ${character.rank || 'لا يوجد'}\n` +
-
-                `🏆 **النقاط:** ${character.points || 0}\n` +
-
-                `🧾 **المخالفات:** ${fines}\n\n` +
-
-                `⛔ **إيقاف الخدمات:** ` +
-                `${
-                    character.servicesSuspended
-                        ? 'نعم'
-                        : 'لا'
-                }`
-
-            )
-            .setColor('#2b2d31')
-            .setTimestamp();
-
-
-        return interaction.reply({
-
-            embeds: [embed],
-
-            ephemeral: true
-
-        });
-    }
-
-
-    // =================================================
-    // حذف شخصية
-    // =================================================
-
-    if (interaction.customId === 'character_delete') {
 
         const characters =
-            getCharacters(discordId);
+            citizens.getCharacters(userId);
 
 
-        if (!characters.length) {
+        if (
+            characters.length === 0
+        ) {
 
-            return interaction.reply({
+            return await interaction.reply({
+
                 content:
-                    '❌ لا توجد شخصيات لحذفها.',
-                ephemeral: true
+                    '❌ ما عندك أي شخصية تختارها.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
             });
+
         }
 
 
-        const rows = [];
-
-        let row = new ActionRowBuilder();
-
-
-        characters.forEach((character, index) => {
-
-            row.addComponents(
-
-                new ButtonBuilder()
-                    .setCustomId(
-                        `character_delete_${character.citizenId}`
-                    )
-                    .setLabel(character.name)
-                    .setEmoji('🗑️')
-                    .setStyle(ButtonStyle.Danger)
-
-            );
+        const modal =
+            new ModalBuilder()
+                .setCustomId(
+                    'character_select_modal'
+                )
+                .setTitle(
+                    '🔄 اختيار الشخصية'
+                );
 
 
-            if (
-                row.components.length === 5 ||
-                index === characters.length - 1
-            ) {
+        const idInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_id'
+                )
+                .setLabel(
+                    'رقم الهوية'
+                )
+                .setPlaceholder(
+                    'اكتب رقم هوية الشخصية'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(5)
+                .setMaxLength(5);
 
-                rows.push(row);
 
-                row = new ActionRowBuilder();
+        modal.addComponents(
 
-            }
+            new ActionRowBuilder()
+                .addComponents(
+                    idInput
+                )
 
-        });
+        );
 
 
-        return interaction.reply({
+        return await interaction.showModal(
+            modal
+        );
 
-            content:
-                '⚠️ اختر الشخصية التي تريد حذفها:',
-
-            components: rows,
-
-            ephemeral: true
-
-        });
     }
 
-
-    // =================================================
-    // تنفيذ حذف الشخصية
-    // =================================================
-
-    if (
-        interaction.customId.startsWith(
-            'character_delete_'
-        )
-    ) {
-
-        const citizenId =
-            interaction.customId.replace(
-                'character_delete_',
-                ''
-            );
-
-
-        const deleted =
-            deleteCharacter(
-                discordId,
-                citizenId
-            );
-
-
-        if (!deleted) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ لم يتم العثور على الشخصية.',
-
-                ephemeral: true
-
-            });
-        }
-
-
-        return interaction.update({
-
-            content:
-                `🗑️ تم حذف الشخصية **${deleted.name}** بنجاح.`,
-
-            embeds: [],
-
-            components: []
-
-        });
-    }
 }
 
 
 // =====================================================
-// النوافذ Modal
+// Modals الشخصيات
 // =====================================================
 
 async function handleCharacterModals(interaction) {
 
-    const discordId = interaction.user.id;
+    const customId =
+        interaction.customId;
+
+    const userId =
+        interaction.user.id;
 
 
     // =================================================
@@ -541,44 +380,24 @@ async function handleCharacterModals(interaction) {
     // =================================================
 
     if (
-        interaction.customId ===
+        customId ===
         'character_create_modal'
     ) {
 
         const name =
-            interaction.fields
-                .getTextInputValue(
-                    'character_name'
-                )
-                .trim();
+            interaction.fields.getTextInputValue(
+                'character_name'
+            ).trim();
 
 
         const ageText =
-            interaction.fields
-                .getTextInputValue(
-                    'character_age'
-                )
-                .trim();
+            interaction.fields.getTextInputValue(
+                'character_age'
+            ).trim();
 
 
-        const age = Number(ageText);
-
-
-        // =================================================
-        // التحقق من الاسم
-        // =================================================
-
-        if (name.length < 2) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ الاسم يجب أن يكون حرفين على الأقل.',
-
-                ephemeral: true
-
-            });
-        }
+        const age =
+            Number(ageText);
 
 
         // =================================================
@@ -591,14 +410,16 @@ async function handleCharacterModals(interaction) {
             age > 100
         ) {
 
-            return interaction.reply({
+            return await interaction.reply({
 
                 content:
-                    '❌ العمر غير صحيح. يجب أن يكون بين 1 و100.',
+                    '❌ العمر غير صحيح.',
 
-                ephemeral: true
+                flags:
+                    MessageFlags.Ephemeral
 
             });
+
         }
 
 
@@ -607,8 +428,8 @@ async function handleCharacterModals(interaction) {
         // =================================================
 
         const character =
-            createCharacter(
-                discordId,
+            citizens.createCharacter(
+                userId,
                 name,
                 age
             );
@@ -616,48 +437,127 @@ async function handleCharacterModals(interaction) {
 
         if (!character) {
 
-            return interaction.reply({
+            return await interaction.reply({
 
                 content:
-                    '❌ حدث خطأ أثناء إنشاء الشخصية.',
+                    '❌ تعذر إنشاء الشخصية.',
 
-                ephemeral: true
+                flags:
+                    MessageFlags.Ephemeral
 
             });
-        }
-
-
-        let message =
-
-            `✅ **تم إنشاء الشخصية بنجاح!**\n\n` +
-
-            `👤 الاسم: **${character.name}**\n` +
-
-            `🆔 رقم الهوية: \`${character.citizenId}\`\n` +
-
-            `🎂 العمر: ${character.age}\n\n` +
-
-            `💵 الكاش: ${Number(character.cash || 0).toLocaleString()} ريال\n` +
-
-            `🏦 البنك: ${Number(character.bank || 0).toLocaleString()} ريال`;
-
-
-        if (character.active) {
-
-            message +=
-                '\n\n🟢 هذه أصبحت شخصيتك الحالية.';
 
         }
 
 
-        return interaction.reply({
+        // =================================================
+        // الرد
+        // =================================================
 
-            content: message,
+        return await interaction.reply({
 
-            ephemeral: true
+            content:
+                `✅ تم إنشاء الشخصية بنجاح!\n\n` +
+                `👤 الاسم: **${character.name}**\n` +
+                `🎂 العمر: **${character.age}**\n` +
+                `🆔 رقم الهوية: **${character.citizenId}**\n\n` +
+                `💵 الكاش: **${character.cash}**\n` +
+                `🏦 البنك: **${character.bank}**`,
+
+            flags:
+                MessageFlags.Ephemeral
 
         });
+
     }
+
+
+    // =================================================
+    // اختيار شخصية
+    // =================================================
+
+    if (
+        customId ===
+        'character_select_modal'
+    ) {
+
+        const citizenId =
+            interaction.fields
+                .getTextInputValue(
+                    'character_id'
+                )
+                .trim();
+
+
+        const characters =
+            citizens.getCharacters(
+                userId
+            );
+
+
+        const character =
+            characters.find(
+                character =>
+                    String(
+                        character.citizenId
+                    ) ===
+                    String(citizenId)
+            );
+
+
+        if (!character) {
+
+            return await interaction.reply({
+
+                content:
+                    '❌ هذه الشخصية غير موجودة في حسابك.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+
+        }
+
+
+        const selected =
+            citizens.setActiveCharacter(
+                userId,
+                citizenId
+            );
+
+
+        if (!selected) {
+
+            return await interaction.reply({
+
+                content:
+                    '❌ تعذر اختيار الشخصية.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+
+        }
+
+
+        return await interaction.reply({
+
+            content:
+                `🟢 تم اختيار الشخصية بنجاح!\n\n` +
+                `👤 الشخصية الحالية: **${selected.name}**\n` +
+                `🆔 رقم الهوية: **${selected.citizenId}**\n\n` +
+                `💵 الكاش: **${selected.cash}**\n` +
+                `🏦 البنك: **${selected.bank}**`,
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+
+    }
+
 }
 
 
