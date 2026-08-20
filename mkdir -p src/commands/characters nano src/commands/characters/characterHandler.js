@@ -11,6 +11,7 @@ const {
 
 const citizens = require('../../utils/citizens');
 
+
 // =====================================================
 // لوحة الشخصيات
 // =====================================================
@@ -19,40 +20,30 @@ async function showCharactersMenu(interaction) {
 
     const userId = interaction.user.id;
 
-    // إنشاء حساب المستخدم إذا غير موجود
     citizens.createUser(userId);
 
     const characters = citizens.getCharacters(userId);
     const activeCharacter = citizens.getActiveCharacter(userId);
 
-    let description =
-        'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
+    let description = 'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
 
     if (characters.length === 0) {
 
-        description +=
-            '❌ لا توجد لديك أي شخصية حالياً.\n\n';
-
-        description +=
-            'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
+        description += '❌ لا توجد لديك أي شخصية حالياً.\n\n';
+        description += 'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
 
     } else {
 
-        description +=
-            `👤 عدد الشخصيات: **${characters.length}**\n\n`;
+        description += `👤 عدد الشخصيات: **${characters.length}**\n\n`;
 
         if (activeCharacter) {
 
-            description +=
-                `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
-
-            description +=
-                `🆔 الهوية: **${activeCharacter.citizenId}**`;
+            description += `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
+            description += `🆔 الهوية: **${activeCharacter.citizenId}**`;
 
         } else {
 
-            description +=
-                '⚠️ لا توجد شخصية محددة حالياً.';
+            description += '⚠️ لا توجد شخصية محددة حالياً.';
 
         }
     }
@@ -103,6 +94,7 @@ async function handleCharacterButtons(interaction) {
     const customId = interaction.customId;
     const userId = interaction.user.id;
 
+
     // =================================================
     // إنشاء شخصية
     // =================================================
@@ -132,13 +124,8 @@ async function handleCharacterButtons(interaction) {
             .setMaxLength(3);
 
         modal.addComponents(
-
-            new ActionRowBuilder()
-                .addComponents(nameInput),
-
-            new ActionRowBuilder()
-                .addComponents(ageInput)
-
+            new ActionRowBuilder().addComponents(nameInput),
+            new ActionRowBuilder().addComponents(ageInput)
         );
 
         return interaction.showModal(modal);
@@ -163,29 +150,20 @@ async function handleCharacterButtons(interaction) {
 
         let text = '👤 **شخصياتك:**\n\n';
 
-        characters.forEach((character, index) => {
+        for (let index = 0; index < characters.length; index++) {
 
-            const active =
-                character.active
-                    ? ' 🟢 **الحالية**'
-                    : '';
+            const character = characters[index];
 
-            text +=
-                `${index + 1}. **${character.name}**${active}\n`;
+            const active = character.active
+                ? ' 🟢 **الحالية**'
+                : '';
 
-            text +=
-                `🆔 الهوية: \`${character.citizenId}\`\n`;
-
-            text +=
-                `🎂 العمر: ${character.age}\n`;
-
-            text +=
-                `💵 الكاش: ${character.cash}\n`;
-
-            text +=
-                `🏦 البنك: ${character.bank}\n\n`;
-
-        });
+            text += `${index + 1}. **${character.name}**${active}\n`;
+            text += `🆔 الهوية: \`${character.citizenId}\`\n`;
+            text += `🎂 العمر: ${character.age}\n`;
+            text += `💵 الكاش: ${character.cash}\n`;
+            text += `🏦 البنك: ${character.bank}\n\n`;
+        }
 
         return interaction.reply({
             content: text,
@@ -224,15 +202,12 @@ async function handleCharacterButtons(interaction) {
             .setMaxLength(5);
 
         modal.addComponents(
-            new ActionRowBuilder()
-                .addComponents(idInput)
+            new ActionRowBuilder().addComponents(idInput)
         );
 
         return interaction.showModal(modal);
     }
 
-
-    // إذا وصل زر غير معروف
     return interaction.reply({
         content: '❌ زر شخصيات غير معروف.',
         flags: MessageFlags.Ephemeral
@@ -267,7 +242,6 @@ async function handleCharacterModals(interaction) {
         const age = Number(ageText);
 
 
-        // التحقق من الاسم
         if (name.length < 2) {
 
             return interaction.reply({
@@ -277,12 +251,7 @@ async function handleCharacterModals(interaction) {
         }
 
 
-        // التحقق من العمر
-        if (
-            !Number.isInteger(age) ||
-            age < 1 ||
-            age > 100
-        ) {
+        if (!Number.isInteger(age) || age < 1 || age > 100) {
 
             return interaction.reply({
                 content: '❌ العمر غير صحيح.',
@@ -291,7 +260,6 @@ async function handleCharacterModals(interaction) {
         }
 
 
-        // إنشاء الشخصية
         const character = citizens.createCharacter(
             userId,
             name,
@@ -334,22 +302,18 @@ async function handleCharacterModals(interaction) {
             .getTextInputValue('character_id')
             .trim();
 
-
         const characters = citizens.getCharacters(userId);
 
-
         const character = characters.find(
-            character =>
-                String(character.citizenId) ===
-                String(citizenId)
+            item =>
+                String(item.citizenId) === String(citizenId)
         );
 
 
         if (!character) {
 
             return interaction.reply({
-                content:
-                    '❌ هذه الشخصية غير موجودة في حسابك.',
+                content: '❌ هذه الشخصية غير موجودة في حسابك.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -364,8 +328,7 @@ async function handleCharacterModals(interaction) {
         if (!selected) {
 
             return interaction.reply({
-                content:
-                    '❌ تعذر اختيار الشخصية.',
+                content: '❌ تعذر اختيار الشخصية.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -386,7 +349,6 @@ async function handleCharacterModals(interaction) {
     }
 
 
-    // إذا وصل Modal غير معروف
     return interaction.reply({
         content: '❌ نموذج شخصيات غير معروف.',
         flags: MessageFlags.Ephemeral
@@ -399,11 +361,7 @@ async function handleCharacterModals(interaction) {
 // =====================================================
 
 module.exports = {
-
     showCharactersMenu,
-
     handleCharacterButtons,
-
     handleCharacterModals
-
 };
