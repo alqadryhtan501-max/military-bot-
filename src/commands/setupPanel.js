@@ -38,13 +38,13 @@ module.exports = {
 
 
         // =====================================================
-        // 2. لوحة الهوية والمواطن
+        // 2. لوحة المواطنين
         // =====================================================
 
         const citizenEmbed = new EmbedBuilder()
             .setTitle('🪪 نظام المواطنين')
             .setDescription(
-                'جميع خدمات الهوية والاستعلام عن المواطنين.'
+                'خدمات الهوية والاستعلام عن المواطنين.'
             )
             .setColor('#2b2d31')
             .setTimestamp();
@@ -77,7 +77,7 @@ module.exports = {
         const servicesEmbed = new EmbedBuilder()
             .setTitle('⚖️ نظام المخالفات والخدمات')
             .setDescription(
-                'إدارة المخالفات وإيقاف وتفعيل الخدمات للمواطنين.'
+                'إدارة المخالفات وإيقاف وتفعيل الخدمات.'
             )
             .setColor('#2b2d31')
             .setTimestamp();
@@ -104,30 +104,74 @@ module.exports = {
 
 
         // =====================================================
+        // 4. لوحة البنك
+        // =====================================================
+
+        const bankEmbed = new EmbedBuilder()
+            .setTitle('🏦 البنك')
+            .setDescription(
+                'اختر العملية البنكية المطلوبة من الأزرار بالأسفل.'
+            )
+            .setColor('#2b2d31')
+            .setTimestamp();
+
+        const bankRow = new ActionRowBuilder()
+            .addComponents(
+
+                new ButtonBuilder()
+                    .setCustomId('btn_bank_balance')
+                    .setLabel('💳 كشف الحساب')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('btn_bank_deposit')
+                    .setLabel('💵 إيداع')
+                    .setStyle(ButtonStyle.Success),
+
+                new ButtonBuilder()
+                    .setCustomId('btn_bank_withdraw')
+                    .setLabel('💸 سحب')
+                    .setStyle(ButtonStyle.Danger),
+
+                new ButtonBuilder()
+                    .setCustomId('btn_bank_transfer')
+                    .setLabel('🔄 تحويل')
+                    .setStyle(ButtonStyle.Secondary)
+
+            );
+
+
+        // =====================================================
         // إرسال اللوحات
         // =====================================================
 
         await interaction.reply({
-            content: '✅ تم إرسال جميع لوحات الأنظمة بنجاح.',
+            content: '✅ تم إرسال جميع لوحات الأنظمة.',
             ephemeral: true
         });
 
-        // لوحة الميدان
+
         await interaction.channel.send({
             embeds: [dutyEmbed],
             components: [dutyRow]
         });
 
-        // لوحة المواطنين
+
         await interaction.channel.send({
             embeds: [citizenEmbed],
             components: [citizenRow]
         });
 
-        // لوحة المخالفات والخدمات
+
         await interaction.channel.send({
             embeds: [servicesEmbed],
             components: [servicesRow]
+        });
+
+
+        await interaction.channel.send({
+            embeds: [bankEmbed],
+            components: [bankRow]
         });
 
     }
