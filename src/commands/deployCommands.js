@@ -3,23 +3,27 @@ require('dotenv').config();
 const {
     REST,
     Routes,
-    SlashCommandBuilder,
-    PermissionFlagsBits
+    SlashCommandBuilder
 } = require('discord.js');
 
 const commands = [
 
-    // ================================
-    // لوحات الأنظمة
-    // ================================
+    // ==========================================
+    // لوحة الشخصيات
+    // ==========================================
+
+    new SlashCommandBuilder()
+        .setName('setup-characters')
+        .setDescription('إرسال لوحة نظام الشخصيات'),
+
+
+    // ==========================================
+    // باقي لوحات النظام
+    // ==========================================
 
     new SlashCommandBuilder()
         .setName('setup-duty')
         .setDescription('إرسال لوحة الميدان'),
-
-    new SlashCommandBuilder()
-        .setName('setup-citizens')
-        .setDescription('إرسال لوحة المواطنين'),
 
     new SlashCommandBuilder()
         .setName('setup-services')
@@ -30,9 +34,9 @@ const commands = [
         .setDescription('إرسال لوحة البنك'),
 
 
-    // ================================
-    // أوامر البنك الإدارية
-    // ================================
+    // ==========================================
+    // أوامر الإدارة
+    // ==========================================
 
     new SlashCommandBuilder()
         .setName('give')
@@ -40,7 +44,7 @@ const commands = [
         .addStringOption(option =>
             option
                 .setName('id')
-                .setDescription('رقم هوية المواطن')
+                .setDescription('رقم الهوية')
                 .setRequired(true)
         )
         .addNumberOption(option =>
@@ -125,12 +129,9 @@ const commands = [
 ].map(command => command.toJSON());
 
 
-// ================================
-// تسجيل الأوامر
-// ================================
-
 const rest = new REST({ version: '10' })
     .setToken(process.env.DISCORD_TOKEN);
+
 
 async function deployCommands() {
 
@@ -152,7 +153,7 @@ async function deployCommands() {
 
     } catch (error) {
 
-        console.error('❌ حدث خطأ:');
+        console.error('❌ حدث خطأ أثناء تسجيل الأوامر:');
         console.error(error);
 
     }
