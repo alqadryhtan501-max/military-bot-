@@ -25,25 +25,34 @@ async function showCharactersMenu(interaction) {
     const characters = citizens.getCharacters(userId);
     const activeCharacter = citizens.getActiveCharacter(userId);
 
-    let description = 'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
+    let description =
+        'من هنا تقدر تدير شخصياتك وتختار الشخصية الحالية.\n\n';
 
     if (characters.length === 0) {
 
-        description += '❌ لا توجد لديك أي شخصية حالياً.\n\n';
-        description += 'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
+        description +=
+            '❌ لا توجد لديك أي شخصية حالياً.\n\n';
+
+        description +=
+            'اضغط **إنشاء شخصية** لإنشاء شخصيتك الأولى.';
 
     } else {
 
-        description += `👤 عدد الشخصيات: **${characters.length}**\n\n`;
+        description +=
+            `👤 عدد الشخصيات: **${characters.length}**\n\n`;
 
         if (activeCharacter) {
 
-            description += `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
-            description += `🆔 الهوية: **${activeCharacter.citizenId}**`;
+            description +=
+                `🟢 الشخصية الحالية: **${activeCharacter.name}**\n`;
+
+            description +=
+                `🆔 الهوية: **${activeCharacter.citizenId}**`;
 
         } else {
 
-            description += '⚠️ لا توجد شخصية محددة حالياً.';
+            description +=
+                '⚠️ لا توجد شخصية محددة حالياً.';
 
         }
     }
@@ -57,7 +66,6 @@ async function showCharactersMenu(interaction) {
     const row = new ActionRowBuilder();
 
     row.addComponents(
-
         new ButtonBuilder()
             .setCustomId('character_create')
             .setLabel('إنشاء شخصية')
@@ -75,7 +83,6 @@ async function showCharactersMenu(interaction) {
             .setLabel('اختيار شخصية')
             .setEmoji('🔄')
             .setStyle(ButtonStyle.Secondary)
-
     );
 
     return interaction.reply({
@@ -93,11 +100,6 @@ async function handleCharacterButtons(interaction) {
 
     const customId = interaction.customId;
     const userId = interaction.user.id;
-
-
-    // =================================================
-    // إنشاء شخصية
-    // =================================================
 
     if (customId === 'character_create') {
 
@@ -133,7 +135,7 @@ async function handleCharacterButtons(interaction) {
 
 
     // =================================================
-    // عرض الشخصيات
+    // قائمة الشخصيات
     // =================================================
 
     if (customId === 'character_list') {
@@ -150,20 +152,27 @@ async function handleCharacterButtons(interaction) {
 
         let text = '👤 **شخصياتك:**\n\n';
 
-        for (let index = 0; index < characters.length; index++) {
-
-            const character = characters[index];
+        characters.forEach((character, index) => {
 
             const active = character.active
                 ? ' 🟢 **الحالية**'
                 : '';
 
-            text += `${index + 1}. **${character.name}**${active}\n`;
-            text += `🆔 الهوية: \`${character.citizenId}\`\n`;
-            text += `🎂 العمر: ${character.age}\n`;
-            text += `💵 الكاش: ${character.cash}\n`;
-            text += `🏦 البنك: ${character.bank}\n\n`;
-        }
+            text +=
+                `${index + 1}. **${character.name}**${active}\n`;
+
+            text +=
+                `🆔 الهوية: \`${character.citizenId}\`\n`;
+
+            text +=
+                `🎂 العمر: ${character.age}\n`;
+
+            text +=
+                `💵 الكاش: ${character.cash}\n`;
+
+            text +=
+                `🏦 البنك: ${character.bank}\n\n`;
+        });
 
         return interaction.reply({
             content: text,
@@ -207,6 +216,7 @@ async function handleCharacterButtons(interaction) {
 
         return interaction.showModal(modal);
     }
+
 
     return interaction.reply({
         content: '❌ زر شخصيات غير معروف.',
@@ -287,7 +297,6 @@ async function handleCharacterModals(interaction) {
                 `🏦 البنك: **${character.bank}**`,
 
             flags: MessageFlags.Ephemeral
-
         });
     }
 
@@ -313,7 +322,8 @@ async function handleCharacterModals(interaction) {
         if (!character) {
 
             return interaction.reply({
-                content: '❌ هذه الشخصية غير موجودة في حسابك.',
+                content:
+                    '❌ هذه الشخصية غير موجودة في حسابك.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -328,7 +338,8 @@ async function handleCharacterModals(interaction) {
         if (!selected) {
 
             return interaction.reply({
-                content: '❌ تعذر اختيار الشخصية.',
+                content:
+                    '❌ تعذر اختيار الشخصية.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -344,7 +355,6 @@ async function handleCharacterModals(interaction) {
                 `🏦 البنك: **${selected.bank}**`,
 
             flags: MessageFlags.Ephemeral
-
         });
     }
 
