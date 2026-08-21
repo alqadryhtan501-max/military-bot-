@@ -56,8 +56,7 @@ async function showCharactersMenu(interaction) {
                 `🟢 الكركتر الحالي: **${activeCharacter.name}**\n`;
 
             description +=
-                `🆔 الرقم: **${activeCharacter.citizenId}` +
-                '**';
+                `🆔 الرقم: **${activeCharacter.citizenId}**`;
 
         } else {
 
@@ -155,7 +154,7 @@ async function showCharactersMenu(interaction) {
 
 
 // =====================================================
-// القائمة الرئيسية للكركترات
+// التعامل مع قائمة الكركترات
 // =====================================================
 
 async function handleCharacterButtons(interaction) {
@@ -277,9 +276,7 @@ async function handleCharacterButtons(interaction) {
                     )
 
                     .setValue(
-                        String(
-                            character.citizenId
-                        )
+                        String(character.citizenId)
                     )
 
                     .setEmoji(
@@ -330,9 +327,7 @@ async function handleCharacterButtons(interaction) {
     if (value === 'character_logout') {
 
         const activeCharacter =
-            citizens.getActiveCharacter(
-                userId
-            );
+            citizens.getActiveCharacter(userId);
 
 
         if (!activeCharacter) {
@@ -349,31 +344,24 @@ async function handleCharacterButtons(interaction) {
         }
 
 
-        // تسجيل الخروج
-        if (
-            typeof citizens.logoutCharacter ===
-            'function'
-        ) {
-
-            citizens.logoutCharacter(
-                userId
-            );
-
-        } else {
-
-            // احتياط إذا لم تكن الدالة موجودة
-            citizens.setActiveCharacter(
-                userId,
-                null
-            );
-
-        }
-
+        /*
+         * citizens.js لا يحتوي logoutCharacter.
+         *
+         * لذلك لا نحاول استدعاء دالة غير موجودة.
+         *
+         * حالياً setActiveCharacter() مخصص
+         * لاختيار شخصية، وليس لتسجيل الخروج.
+         *
+         * سيتم إضافة نظام Logout بشكل صحيح
+         * إلى citizens.js لاحقاً إذا احتجناه.
+         */
 
         return interaction.reply({
 
             content:
-                `🚪 تم تسجيل الخروج من الكركتر **${activeCharacter.name}**.`,
+                `ℹ️ الكركتر الحالي هو **${activeCharacter.name}**.\n\n` +
+                `🆔 رقم الهوية: \`${activeCharacter.citizenId}\`\n\n` +
+                `نظام تسجيل الخروج يحتاج دالة Logout مستقلة في قاعدة البيانات.`,
 
             flags:
                 MessageFlags.Ephemeral
@@ -389,9 +377,7 @@ async function handleCharacterButtons(interaction) {
     if (value === 'character_identity') {
 
         const activeCharacter =
-            citizens.getActiveCharacter(
-                userId
-            );
+            citizens.getActiveCharacter(userId);
 
 
         if (!activeCharacter) {
@@ -406,6 +392,21 @@ async function handleCharacterButtons(interaction) {
 
             });
         }
+
+
+        // الوظيفة في citizens.js عبارة عن Object
+        const jobName =
+            activeCharacter.job &&
+            activeCharacter.job.name
+                ? activeCharacter.job.name
+                : 'لا يوجد';
+
+
+        const jobRank =
+            activeCharacter.job &&
+            activeCharacter.job.rank
+                ? activeCharacter.job.rank
+                : 'لا يوجد';
 
 
         const embed =
@@ -431,43 +432,61 @@ async function handleCharacterButtons(interaction) {
                     {
                         name: '🎂 العمر',
                         value:
-                            String(
-                                activeCharacter.age
-                            ),
+                            String(activeCharacter.age),
                         inline: true
                     },
 
                     {
                         name: '💵 الكاش',
                         value:
-                            String(
-                                activeCharacter.cash
-                            ),
+                            `${Number(
+                                activeCharacter.cash || 0
+                            ).toLocaleString()} ريال`,
                         inline: true
                     },
 
                     {
                         name: '🏦 البنك',
                         value:
-                            String(
-                                activeCharacter.bank
-                            ),
+                            `${Number(
+                                activeCharacter.bank || 0
+                            ).toLocaleString()} ريال`,
                         inline: true
                     },
 
                     {
                         name: '💼 الوظيفة',
                         value:
-                            activeCharacter.job ||
-                            'لا يوجد',
+                            jobName,
                         inline: true
                     },
 
                     {
                         name: '⭐ الرتبة',
                         value:
-                            activeCharacter.rank ||
-                            'لا يوجد',
+                            jobRank,
+                        inline: true
+                    },
+
+                    {
+                        name: '⛔ حالة الخدمات',
+                        value:
+                            activeCharacter.servicesSuspended
+                                ? 'موقوفة'
+                                : 'مفعلة',
+                        inline: true
+                    },
+
+                    {
+                        name: '🧾 المخالفات',
+                        value:
+                            String(
+                                Array.isArray(
+                                    activeCharacter.fines
+                                )
+                                    ? activeCharacter.fines.length
+                                    : 0
+                            ),
                         inline: true
                     }
 
@@ -496,9 +515,7 @@ async function handleCharacterButtons(interaction) {
     if (value === 'character_delete') {
 
         const characters =
-            citizens.getCharacters(
-                userId
-            );
+            citizens.getCharacters(userId);
 
 
         if (characters.length === 0) {
@@ -588,21 +605,15 @@ async function handleCharacterLogin(
 
 
     const characters =
-        citizens.getCharacters(
-            userId
-        );
+        citizens.getCharacters(userId);
 
 
     const character =
         characters.find(
 
             item =>
-                String(
-                    item.citizenId
-                ) ===
-                String(
-                    citizenId
-                )
+                String(item.citizenId) ===
+                String(citizenId)
 
         );
 
@@ -648,7 +659,13 @@ async function handleCharacterLogin(
             `🔐 **تم تسجيل الدخول بنجاح!**\n\n` +
             `👤 الكركتر: **${selected.name}**\n` +
             `🆔 الرقم: \`${selected.citizenId}\`\n` +
-            `🎂 العمر: **${selected.age}**`,
+            `🎂 العمر: **${selected.age}**\n\n` +
+            `💵 الكاش: **${Number(
+                selected.cash || 0
+            ).toLocaleString()} ريال**\n` +
+            `🏦 البنك: **${Number(
+                selected.bank || 0
+            ).toLocaleString()} ريال**`,
 
         flags:
             MessageFlags.Ephemeral
@@ -724,7 +741,7 @@ async function handleCharacterModals(
         if (
             !Number.isInteger(age) ||
             age < 1 ||
-            age > 100
+            age > 120
         ) {
 
             return interaction.reply({
@@ -741,16 +758,35 @@ async function handleCharacterModals(
 
         // إنشاء الكركتر
 
-        const character =
-            citizens.createCharacter(
+        let character;
 
-                userId,
+        try {
 
-                name,
+            character =
+                citizens.createCharacter(
+                    userId,
+                    name,
+                    age
+                );
 
-                age
+        } catch (error) {
 
+            console.error(
+                '❌ خطأ في إنشاء الكركتر:',
+                error
             );
+
+            return interaction.reply({
+
+                content:
+                    '❌ تعذر إنشاء الكركتر.\n' +
+                    'تأكد من صحة البيانات.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
 
 
         if (!character) {
@@ -774,8 +810,12 @@ async function handleCharacterModals(
                 `👤 الاسم: **${character.name}**\n` +
                 `🎂 العمر: **${character.age}**\n` +
                 `🆔 رقم الكركتر: \`${character.citizenId}\`\n\n` +
-                `💵 الكاش: **${character.cash}**\n` +
-                `🏦 البنك: **${character.bank}**`,
+                `💵 الكاش: **${Number(
+                    character.cash || 0
+                ).toLocaleString()} ريال**\n` +
+                `🏦 البنك: **${Number(
+                    character.bank || 0
+                ).toLocaleString()} ريال**`,
 
             flags:
                 MessageFlags.Ephemeral
@@ -802,21 +842,15 @@ async function handleCharacterModals(
 
 
         const characters =
-            citizens.getCharacters(
-                userId
-            );
+            citizens.getCharacters(userId);
 
 
         const character =
             characters.find(
 
                 item =>
-                    String(
-                        item.citizenId
-                    ) ===
-                    String(
-                        citizenId
-                    )
+                    String(item.citizenId) ===
+                    String(citizenId)
 
             );
 
@@ -837,11 +871,8 @@ async function handleCharacterModals(
 
         const deleted =
             citizens.deleteCharacter(
-
                 userId,
-
                 citizenId
-
             );
 
 
@@ -860,9 +891,7 @@ async function handleCharacterModals(
 
 
         const newActive =
-            citizens.getActiveCharacter(
-                userId
-            );
+            citizens.getActiveCharacter(userId);
 
 
         let message =
@@ -874,7 +903,8 @@ async function handleCharacterModals(
         if (newActive) {
 
             message +=
-                `\n\n🟢 الكركتر الحالي: **${newActive.name}**`;
+                `\n\n🟢 الكركتر الحالي: **${newActive.name}**\n` +
+                `🆔 الرقم: \`${newActive.citizenId}\``;
 
         } else {
 
