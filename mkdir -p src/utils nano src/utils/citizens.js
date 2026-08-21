@@ -48,6 +48,7 @@ function loadData() {
             data === null ||
             Array.isArray(data)
         ) {
+
             console.error(
                 '❌ قاعدة البيانات غير صالحة.'
             );
@@ -270,6 +271,7 @@ function createCharacter(
         typeof name !== 'string' ||
         !name.trim()
     ) {
+
         throw new Error(
             'اسم الشخصية غير صالح.'
         );
@@ -283,6 +285,7 @@ function createCharacter(
         characterAge < 1 ||
         characterAge > 120
     ) {
+
         throw new Error(
             'العمر غير صالح.'
         );
@@ -1063,6 +1066,110 @@ function removeFine(
 }
 
 // =====================================================
+// دفع مخالفة
+// =====================================================
+
+function payFine(
+    citizenId,
+    fineId
+) {
+
+    const data = loadData();
+
+    const result =
+        findCharacterFromData(
+            data,
+            citizenId
+        );
+
+    // Character غير موجود
+    if (!result) {
+        return null;
+    }
+
+    const character =
+        result.character;
+
+    // التأكد من وجود المخالفات
+    if (
+        !Array.isArray(character.fines)
+    ) {
+
+        character.fines = [];
+    }
+
+    // البحث عن المخالفة
+    const fine =
+        character.fines.find(
+            item =>
+                String(item.id) ===
+                String(fineId)
+        );
+
+    // المخالفة غير موجودة
+    if (!fine) {
+        return null;
+    }
+
+    // المخالفة مدفوعة مسبقاً
+    if (
+        fine.status === 'paid'
+    ) {
+
+        return false;
+    }
+
+    const amount =
+        Number(fine.amount);
+
+    // التأكد من صحة المبلغ
+    if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+    ) {
+
+        return false;
+    }
+
+    // التأكد من وجود رصيد كافي
+    if (
+        Number(character.bank || 0) < amount
+    ) {
+
+        return false;
+    }
+
+    // خصم قيمة المخالفة من البنك
+    character.bank -= amount;
+
+    // تحديث حالة المخالفة
+    fine.status = 'paid';
+
+    fine.paidAt =
+        Date.now();
+
+    // تحديث الشخصية
+    character.updatedAt =
+        Date.now();
+
+    result.user.updatedAt =
+        Date.now();
+
+    // حفظ البيانات
+    const saved =
+        saveData(data);
+
+    if (!saved) {
+        return false;
+    }
+
+    return {
+        character,
+        fine
+    };
+}
+
+// =====================================================
 // إيقاف الخدمات
 // =====================================================
 
@@ -1254,6 +1361,7 @@ module.exports = {
     // المخالفات
     addFine,
     removeFine,
+    payFine,
 
     // الخدمات
     suspendServices,
