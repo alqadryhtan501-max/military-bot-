@@ -64,16 +64,55 @@ function requireActiveCharacter(interaction) {
     if (!character) {
 
         interaction.reply({
+
             content:
                 '❌ يجب أن تكون مسجل دخول في كركتر أولاً.',
+
             flags:
                 MessageFlags.Ephemeral
+
         });
 
         return null;
     }
 
     return character;
+}
+
+
+// =====================================================
+// الحصول على اسم الوظيفة
+// =====================================================
+
+function getJobName(character) {
+
+    if (!character.job) {
+        return 'لا يوجد';
+    }
+
+    if (typeof character.job === 'string') {
+        return character.job;
+    }
+
+    return character.job.name || 'لا يوجد';
+}
+
+
+// =====================================================
+// الحصول على رتبة الوظيفة
+// =====================================================
+
+function getJobRank(character) {
+
+    if (!character.job) {
+        return 'لا يوجد';
+    }
+
+    if (typeof character.job === 'string') {
+        return 'لا يوجد';
+    }
+
+    return character.job.rank || 'لا يوجد';
 }
 
 
@@ -93,19 +132,19 @@ async function handleBankCommand(interaction) {
 
     if (command === 'bank') {
 
-        const citizen =
+        const character =
             requireActiveCharacter(interaction);
 
-        if (!citizen) {
+        if (!character) {
             return;
         }
 
 
         const cash =
-            Number(citizen.cash || 0);
+            Number(character.cash || 0);
 
         const bank =
-            Number(citizen.bank || 0);
+            Number(character.bank || 0);
 
         const total =
             cash + bank;
@@ -116,6 +155,10 @@ async function handleBankCommand(interaction) {
 
                 .setTitle('🏦 كشف الحساب')
 
+                .setDescription(
+                    `الحساب المالي للكركتر النشط **${character.name}**`
+                )
+
                 .setColor('#2b2d31')
 
                 .addFields(
@@ -123,14 +166,14 @@ async function handleBankCommand(interaction) {
                     {
                         name: '👤 المواطن',
                         value:
-                            citizen.name,
+                            character.name,
                         inline: false
                     },
 
                     {
                         name: '🪪 رقم الهوية',
                         value:
-                            `\`${citizen.citizenId}\``,
+                            `\`${character.citizenId}\``,
                         inline: true
                     },
 
@@ -157,6 +200,11 @@ async function handleBankCommand(interaction) {
 
                 )
 
+                .setFooter({
+                    text:
+                        'الحساب مرتبط بالكركتر النشط'
+                })
+
                 .setTimestamp();
 
 
@@ -178,10 +226,10 @@ async function handleBankCommand(interaction) {
 
     if (command === 'deposit') {
 
-        const citizen =
+        const character =
             requireActiveCharacter(interaction);
 
-        if (!citizen) {
+        if (!character) {
             return;
         }
 
@@ -205,7 +253,7 @@ async function handleBankCommand(interaction) {
 
 
         if (
-            amount > Number(citizen.cash)
+            amount > Number(character.cash || 0)
         ) {
 
             return interaction.reply({
@@ -222,8 +270,11 @@ async function handleBankCommand(interaction) {
 
         const removedCash =
             citizens.removeCash(
-                citizen.citizenId,
+
+                character.citizenId,
+
                 amount
+
             );
 
 
@@ -243,16 +294,19 @@ async function handleBankCommand(interaction) {
 
         const addedBank =
             citizens.addBank(
-                citizen.citizenId,
+
+                character.citizenId,
+
                 amount
+
             );
 
 
         if (!addedBank) {
 
-            // محاولة إعادة الكاش
+            // إعادة الكاش
             citizens.addCash(
-                citizen.citizenId,
+                character.citizenId,
                 amount
             );
 
@@ -274,7 +328,11 @@ async function handleBankCommand(interaction) {
 
                 `✅ **تم الإيداع بنجاح.**\n\n` +
 
-                `💰 المبلغ: **${formatMoney(amount)}**\n` +
+                `👤 الكركتر: **${addedBank.name}**\n` +
+
+                `🪪 الهوية: \`${addedBank.citizenId}\`\n` +
+
+                `💰 المبلغ: **${formatMoney(amount)}**\n\n` +
 
                 `💵 الكاش: **${formatMoney(addedBank.cash)}**\n` +
 
@@ -293,10 +351,10 @@ async function handleBankCommand(interaction) {
 
     if (command === 'withdraw') {
 
-        const citizen =
+        const character =
             requireActiveCharacter(interaction);
 
-        if (!citizen) {
+        if (!character) {
             return;
         }
 
@@ -320,7 +378,7 @@ async function handleBankCommand(interaction) {
 
 
         if (
-            amount > Number(citizen.bank)
+            amount > Number(character.bank || 0)
         ) {
 
             return interaction.reply({
@@ -337,8 +395,11 @@ async function handleBankCommand(interaction) {
 
         const removedBank =
             citizens.removeBank(
-                citizen.citizenId,
+
+                character.citizenId,
+
                 amount
+
             );
 
 
@@ -358,8 +419,11 @@ async function handleBankCommand(interaction) {
 
         const addedCash =
             citizens.addCash(
-                citizen.citizenId,
+
+                character.citizenId,
+
                 amount
+
             );
 
 
@@ -367,7 +431,7 @@ async function handleBankCommand(interaction) {
 
             // إعادة المبلغ للبنك
             citizens.addBank(
-                citizen.citizenId,
+                character.citizenId,
                 amount
             );
 
@@ -389,7 +453,11 @@ async function handleBankCommand(interaction) {
 
                 `✅ **تم السحب بنجاح.**\n\n` +
 
-                `💰 المبلغ: **${formatMoney(amount)}**\n` +
+                `👤 الكركتر: **${addedCash.name}**\n` +
+
+                `🪪 الهوية: \`${addedCash.citizenId}\`\n` +
+
+                `💰 المبلغ: **${formatMoney(amount)}**\n\n` +
 
                 `💵 الكاش: **${formatMoney(addedCash.cash)}**\n` +
 
@@ -496,7 +564,7 @@ async function handleBankCommand(interaction) {
 
 
         if (
-            amount > Number(sender.bank)
+            amount > Number(sender.bank || 0)
         ) {
 
             return interaction.reply({
@@ -543,11 +611,15 @@ async function handleBankCommand(interaction) {
 
                 `✅ **تم التحويل بنجاح.**\n\n` +
 
+                `👤 من: **${result.sender.name}**\n` +
+
+                `🪪 هويته: \`${result.sender.citizenId}\`\n\n` +
+
+                `👤 إلى: **${result.receiver.name}**\n` +
+
+                `🪪 هويته: \`${result.receiver.citizenId}\`\n\n` +
+
                 `💰 المبلغ: **${formatMoney(amount)}**\n` +
-
-                `👤 المستلم: **${receiver.name}**\n` +
-
-                `🪪 الهوية: \`${receiver.citizenId}\`\n\n` +
 
                 `🏦 رصيدك الجديد: **${formatMoney(result.sender.bank)}**`,
 
@@ -652,7 +724,7 @@ async function handleBankCommand(interaction) {
 
 
         if (
-            amount > Number(sender.cash)
+            amount > Number(sender.cash || 0)
         ) {
 
             return interaction.reply({
@@ -699,11 +771,15 @@ async function handleBankCommand(interaction) {
 
                 `✅ **تم إعطاء الكاش بنجاح.**\n\n` +
 
+                `👤 من: **${result.sender.name}**\n` +
+
+                `🪪 هويته: \`${result.sender.citizenId}\`\n\n` +
+
+                `👤 إلى: **${result.receiver.name}**\n` +
+
+                `🪪 هويته: \`${result.receiver.citizenId}\`\n\n` +
+
                 `💰 المبلغ: **${formatMoney(amount)}**\n` +
-
-                `👤 المستلم: **${receiver.name}**\n` +
-
-                `🪪 الهوية: \`${receiver.citizenId}\`\n\n` +
 
                 `💵 الكاش المتبقي: **${formatMoney(result.sender.cash)}**`,
 
@@ -721,13 +797,9 @@ async function handleBankCommand(interaction) {
     const adminCommands = [
 
         'bank-give',
-
         'bank-take',
-
         'bank-reset',
-
         'bank-set',
-
         'bank-info'
 
     ];
@@ -738,7 +810,7 @@ async function handleBankCommand(interaction) {
     ) {
 
         // =================================================
-        // التحقق من صلاحية الإدارة
+        // صلاحية الإدارة
         // =================================================
 
         if (
@@ -800,7 +872,7 @@ async function handleBankCommand(interaction) {
         }
 
 
-        const citizen =
+        const character =
             result.character;
 
 
@@ -811,10 +883,10 @@ async function handleBankCommand(interaction) {
         if (command === 'bank-info') {
 
             const cash =
-                Number(citizen.cash || 0);
+                Number(character.cash || 0);
 
             const bank =
-                Number(citizen.bank || 0);
+                Number(character.bank || 0);
 
             const total =
                 cash + bank;
@@ -832,14 +904,14 @@ async function handleBankCommand(interaction) {
                         {
                             name: '👤 الاسم',
                             value:
-                                citizen.name,
+                                character.name,
                             inline: false
                         },
 
                         {
                             name: '🪪 الهوية',
                             value:
-                                `\`${citizen.citizenId}\``,
+                                `\`${character.citizenId}\``,
                             inline: true
                         },
 
@@ -882,7 +954,7 @@ async function handleBankCommand(interaction) {
 
 
         // =================================================
-        // المبلغ للأوامر الأخرى
+        // المبلغ
         // =================================================
 
         const amount =
@@ -914,8 +986,11 @@ async function handleBankCommand(interaction) {
 
             const updated =
                 citizens.addBank(
-                    citizen.citizenId,
+
+                    character.citizenId,
+
                     amount
+
                 );
 
 
@@ -939,9 +1014,9 @@ async function handleBankCommand(interaction) {
 
                     `✅ **تمت إضافة المبلغ بنجاح.**\n\n` +
 
-                    `👤 المواطن: **${citizen.name}**\n` +
+                    `👤 المواطن: **${character.name}**\n` +
 
-                    `🪪 الهوية: \`${citizen.citizenId}\`\n` +
+                    `🪪 الهوية: \`${character.citizenId}\`\n` +
 
                     `💰 المبلغ: **${formatMoney(amount)}**\n` +
 
@@ -961,7 +1036,7 @@ async function handleBankCommand(interaction) {
         if (command === 'bank-take') {
 
             if (
-                amount > Number(citizen.bank)
+                amount > Number(character.bank || 0)
             ) {
 
                 return interaction.reply({
@@ -978,8 +1053,11 @@ async function handleBankCommand(interaction) {
 
             const updated =
                 citizens.removeBank(
-                    citizen.citizenId,
+
+                    character.citizenId,
+
                     amount
+
                 );
 
 
@@ -1003,9 +1081,9 @@ async function handleBankCommand(interaction) {
 
                     `✅ **تم خصم المبلغ بنجاح.**\n\n` +
 
-                    `👤 المواطن: **${citizen.name}**\n` +
+                    `👤 المواطن: **${character.name}**\n` +
 
-                    `🪪 الهوية: \`${citizen.citizenId}\`\n` +
+                    `🪪 الهوية: \`${character.citizenId}\`\n` +
 
                     `💰 المبلغ: **${formatMoney(amount)}**\n` +
 
@@ -1025,13 +1103,13 @@ async function handleBankCommand(interaction) {
         if (command === 'bank-reset') {
 
             const oldTotal =
-                Number(citizen.cash || 0) +
-                Number(citizen.bank || 0);
+                Number(character.cash || 0) +
+                Number(character.bank || 0);
 
 
             const updated =
                 citizens.resetMoney(
-                    citizen.citizenId
+                    character.citizenId
                 );
 
 
@@ -1055,9 +1133,9 @@ async function handleBankCommand(interaction) {
 
                     `✅ **تم تصفير الحساب بنجاح.**\n\n` +
 
-                    `👤 المواطن: **${citizen.name}**\n` +
+                    `👤 المواطن: **${character.name}**\n` +
 
-                    `🪪 الهوية: \`${citizen.citizenId}\`\n` +
+                    `🪪 الهوية: \`${character.citizenId}\`\n` +
 
                     `💰 المبلغ الذي تم تصفيره: **${formatMoney(oldTotal)}**\n\n` +
 
@@ -1081,7 +1159,7 @@ async function handleBankCommand(interaction) {
             const updated =
                 citizens.updateCharacter(
 
-                    citizen.citizenId,
+                    character.citizenId,
 
                     {
                         bank: amount
@@ -1110,9 +1188,9 @@ async function handleBankCommand(interaction) {
 
                     `✅ **تم تحديد رصيد البنك.**\n\n` +
 
-                    `👤 المواطن: **${citizen.name}**\n` +
+                    `👤 المواطن: **${character.name}**\n` +
 
-                    `🪪 الهوية: \`${citizen.citizenId}\`\n` +
+                    `🪪 الهوية: \`${character.citizenId}\`\n` +
 
                     `🏦 الرصيد الجديد: **${formatMoney(updated.bank)}**`,
 
