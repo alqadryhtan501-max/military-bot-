@@ -11,26 +11,26 @@ require('dotenv').config();
 // الأنظمة
 // =====================================================
 
+// لوحة النظام الرئيسية
 const setupPanel =
     require('./src/commands/setupPanel');
 
+// نظام الأزرار العام
 const {
     handleButtons
 } = require('./src/commands/buttons/buttonHandler');
 
+// نظام المودالات العام
 const {
     handleModals
 } = require('./src/commands/modals/modalHandler');
 
+// نظام البنك
 const {
     handleBankCommand
 } = require('./src/commands/bank/bankHandler');
 
-
-// =====================================================
-// نظام الشخصيات
-// =====================================================
-
+// نظام الكركترات
 const characterHandler =
     require('./src/commands/characters/characterHandler');
 
@@ -51,7 +51,6 @@ const GUILD_ID =
 // =====================================================
 
 if (!DISCORD_TOKEN) {
-
     console.error(
         '❌ DISCORD_TOKEN غير موجود في ملف .env'
     );
@@ -60,11 +59,9 @@ if (!DISCORD_TOKEN) {
 }
 
 if (!GUILD_ID) {
-
     console.warn(
         '⚠️ GUILD_ID غير موجود في ملف .env'
     );
-
 }
 
 
@@ -73,17 +70,11 @@ if (!GUILD_ID) {
 // =====================================================
 
 const client = new Client({
-
     intents: [
-
         GatewayIntentBits.Guilds,
-
         GatewayIntentBits.GuildMessages,
-
         GatewayIntentBits.MessageContent
-
     ]
-
 });
 
 
@@ -91,23 +82,19 @@ const client = new Client({
 // تشغيل البوت
 // =====================================================
 
-client.once('ready', () => {
+client.once('clientReady', () => {
 
     console.log('');
     console.log('======================================');
-
     console.log(
         `🤖 تم تشغيل البوت بنجاح: ${client.user.tag}`
     );
-
     console.log(
         `📡 مرتبط بالسيرفر رقم: ${GUILD_ID}`
     );
-
     console.log(
         `🆔 Bot ID: ${client.user.id}`
     );
-
     console.log('======================================');
     console.log('');
 
@@ -130,32 +117,39 @@ client.on(
 
             if (interaction.isChatInputCommand()) {
 
-                // =============================================
-                // setup-characters
-                // =============================================
+                const commandName =
+                    interaction.commandName;
+
+
+                console.log(
+                    `📥 Command: ${commandName}`
+                );
+
+
+                // =================================================
+                // نظام الكركترات
+                // =================================================
 
                 if (
-                    interaction.commandName ===
+                    commandName ===
                     'setup-characters'
                 ) {
 
-                    console.log(
-                        '🆔 تم استلام أمر setup-characters'
-                    );
-
                     if (
+                        !characterHandler ||
                         typeof characterHandler.showCharactersMenu !==
                         'function'
                     ) {
 
                         console.error(
-                            '❌ showCharactersMenu غير موجودة في characterHandler.js'
+                            '❌ showCharactersMenu غير موجودة'
                         );
 
                         return await interaction.reply({
                             content:
-                                '❌ نظام الشخصيات غير مكتمل. راجع characterHandler.js',
-                            flags: MessageFlags.Ephemeral
+                                '❌ نظام الكركترات غير جاهز.',
+                            flags:
+                                MessageFlags.Ephemeral
                         });
 
                     }
@@ -163,32 +157,29 @@ client.on(
                     return await characterHandler.showCharactersMenu(
                         interaction
                     );
-
                 }
 
 
-                // =============================================
-                // setup-panel
-                // =============================================
+                // =================================================
+                // لوحة النظام
+                // =================================================
 
                 if (
-                    interaction.commandName ===
+                    commandName ===
                     'setup-panel'
                 ) {
 
                     return await setupPanel.execute(
                         interaction
                     );
-
                 }
 
 
-                // =============================================
+                // =================================================
                 // أوامر البنك
-                // =============================================
+                // =================================================
 
                 const bankCommands = [
-
                     'bank',
                     'deposit',
                     'withdraw',
@@ -199,30 +190,30 @@ client.on(
                     'bank-reset',
                     'bank-set',
                     'bank-info'
-
                 ];
 
 
                 if (
                     bankCommands.includes(
-                        interaction.commandName
+                        commandName
                     )
                 ) {
 
                     return await handleBankCommand(
                         interaction
                     );
-
                 }
 
 
-                // إذا وصل أمر غير معروف
+                // =================================================
+                // أمر غير معروف
+                // =================================================
+
                 console.log(
-                    `⚠️ أمر غير معروف: ${interaction.commandName}`
+                    `⚠️ أمر غير معروف: ${commandName}`
                 );
 
                 return;
-
             }
 
 
@@ -232,29 +223,36 @@ client.on(
 
             if (interaction.isButton()) {
 
-                // =============================================
-                // أزرار الشخصيات
-                // =============================================
+                const customId =
+                    interaction.customId;
+
+
+                console.log(
+                    `🔘 Button: ${customId}`
+                );
+
+
+                // =================================================
+                // أزرار الكركترات
+                // =================================================
 
                 if (
-                    interaction.customId.startsWith(
+                    customId.startsWith(
                         'character_'
                     )
                 ) {
 
                     if (
+                        !characterHandler ||
                         typeof characterHandler.handleCharacterButtons !==
                         'function'
                     ) {
 
                         return await interaction.reply({
-
                             content:
-                                '❌ نظام أزرار الشخصيات غير متوفر.',
-
+                                '❌ نظام أزرار الكركترات غير جاهز.',
                             flags:
                                 MessageFlags.Ephemeral
-
                         });
 
                     }
@@ -262,18 +260,16 @@ client.on(
                     return await characterHandler.handleCharacterButtons(
                         interaction
                     );
-
                 }
 
 
-                // =============================================
+                // =================================================
                 // باقي الأزرار
-                // =============================================
+                // =================================================
 
                 return await handleButtons(
                     interaction
                 );
-
             }
 
 
@@ -283,29 +279,36 @@ client.on(
 
             if (interaction.isModalSubmit()) {
 
-                // =============================================
-                // Modals الشخصيات
-                // =============================================
+                const customId =
+                    interaction.customId;
+
+
+                console.log(
+                    `📝 Modal: ${customId}`
+                );
+
+
+                // =================================================
+                // Modals الكركترات
+                // =================================================
 
                 if (
-                    interaction.customId.startsWith(
+                    customId.startsWith(
                         'character_'
                     )
                 ) {
 
                     if (
+                        !characterHandler ||
                         typeof characterHandler.handleCharacterModals !==
                         'function'
                     ) {
 
                         return await interaction.reply({
-
                             content:
-                                '❌ نظام Modals الشخصيات غير متوفر.',
-
+                                '❌ نظام مودالات الكركترات غير جاهز.',
                             flags:
                                 MessageFlags.Ephemeral
-
                         });
 
                     }
@@ -313,18 +316,16 @@ client.on(
                     return await characterHandler.handleCharacterModals(
                         interaction
                     );
-
                 }
 
 
-                // =============================================
-                // باقي Modals
-                // =============================================
+                // =================================================
+                // باقي المودالات
+                // =================================================
 
                 return await handleModals(
                     interaction
                 );
-
             }
 
         } catch (error) {
@@ -335,7 +336,7 @@ client.on(
             );
 
             console.error(
-                '❌ Interaction Error:'
+                '❌ Interaction Error'
             );
 
             console.error(error);
@@ -348,7 +349,7 @@ client.on(
 
 
             // =================================================
-            // إرسال رسالة الخطأ
+            // إرسال الخطأ للمستخدم
             // =================================================
 
             try {
@@ -359,27 +360,20 @@ client.on(
                 ) {
 
                     await interaction.followUp({
-
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
-
                         flags:
                             MessageFlags.Ephemeral
-
                     });
 
                 } else {
 
                     await interaction.reply({
-
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
-
                         flags:
                             MessageFlags.Ephemeral
-
                     });
-
                 }
 
             } catch (replyError) {
@@ -388,11 +382,8 @@ client.on(
                     '❌ تعذر إرسال رسالة الخطأ:',
                     replyError
                 );
-
             }
-
         }
-
     }
 );
 
@@ -407,6 +398,35 @@ client.on(
 
         console.error(
             '❌ Discord Client Error:',
+            error
+        );
+
+    }
+);
+
+
+// =====================================================
+// أخطاء غير معالجة
+// =====================================================
+
+process.on(
+    'unhandledRejection',
+    (error) => {
+
+        console.error(
+            '❌ Unhandled Rejection:',
+            error
+        );
+
+    }
+);
+
+process.on(
+    'uncaughtException',
+    (error) => {
+
+        console.error(
+            '❌ Uncaught Exception:',
             error
         );
 
