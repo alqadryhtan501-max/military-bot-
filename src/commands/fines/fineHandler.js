@@ -1,10 +1,17 @@
 const {
     EmbedBuilder,
-    PermissionFlagsBits,
     MessageFlags
 } = require('discord.js');
 
 const citizens = require('../../utils/citizens');
+
+
+// =====================================================
+// إعدادات الشرطة
+// =====================================================
+
+// ضع هنا ID رتبة الشرطة في السيرفر
+const POLICE_ROLE_ID = 'حط_ايدي_رتبة_الشرطة_هنا';
 
 
 // =====================================================
@@ -58,18 +65,43 @@ function requireActiveCharacter(interaction) {
 
 
 // =====================================================
-// التحقق من الإدارة
+// التحقق من الشرطة
 // =====================================================
 
-function isAdmin(interaction) {
+function isPolice(interaction) {
 
     return (
         interaction.member &&
-        interaction.member.permissions &&
-        interaction.member.permissions.has(
-            PermissionFlagsBits.Administrator
+        interaction.member.roles &&
+        interaction.member.roles.cache.has(
+            POLICE_ROLE_ID
         )
     );
+}
+
+
+// =====================================================
+// التحقق من صلاحية الشرطة
+// =====================================================
+
+function requirePolice(interaction) {
+
+    if (!isPolice(interaction)) {
+
+        interaction.reply({
+
+            content:
+                '❌ هذا الأمر مخصص للشرطة فقط.',
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -79,9 +111,7 @@ function isAdmin(interaction) {
 
 function getFines(character) {
 
-    if (
-        !Array.isArray(character.fines)
-    ) {
+    if (!Array.isArray(character.fines)) {
 
         character.fines = [];
     }
@@ -104,9 +134,7 @@ async function handleFineCommand(interaction) {
     // 🚨 عرض مخالفات الكركتر الحالي
     // =================================================
 
-    if (
-        command === 'fines'
-    ) {
+    if (command === 'fines') {
 
         const character =
             requireActiveCharacter(interaction);
@@ -135,9 +163,7 @@ async function handleFineCommand(interaction) {
 
 
         // لا توجد مخالفات
-        if (
-            fines.length === 0
-        ) {
+        if (fines.length === 0) {
 
             const embed =
                 new EmbedBuilder()
@@ -157,8 +183,7 @@ async function handleFineCommand(interaction) {
 
             return interaction.reply({
 
-                embeds:
-                    [embed],
+                embeds: [embed],
 
                 flags:
                     MessageFlags.Ephemeral
@@ -173,12 +198,10 @@ async function handleFineCommand(interaction) {
 
 
         // =================================================
-        // المخالفات غير المدفوعة
+        // 🔴 المخالفات غير المدفوعة
         // =================================================
 
-        if (
-            unpaidFines.length > 0
-        ) {
+        if (unpaidFines.length > 0) {
 
             description +=
                 '### 🔴 مخالفات غير مدفوعة\n\n';
@@ -204,12 +227,10 @@ async function handleFineCommand(interaction) {
 
 
         // =================================================
-        // المخالفات المدفوعة
+        // 🟢 المخالفات المدفوعة
         // =================================================
 
-        if (
-            paidFines.length > 0
-        ) {
+        if (paidFines.length > 0) {
 
             description +=
                 '### 🟢 مخالفات مدفوعة\n\n';
@@ -235,12 +256,10 @@ async function handleFineCommand(interaction) {
 
 
         // =================================================
-        // حالة الخدمات
+        // ⛔ حالة الخدمات
         // =================================================
 
-        if (
-            character.servicesSuspended
-        ) {
+        if (character.servicesSuspended) {
 
             description +=
                 '### ⛔ إيقاف الخدمات\n\n';
@@ -257,6 +276,10 @@ async function handleFineCommand(interaction) {
                 'الخدمات غير موقوفة.\n\n';
         }
 
+
+        // =================================================
+        // 💰 إجمالي المخالفات
+        // =================================================
 
         const totalUnpaid =
             unpaidFines.reduce(
@@ -289,8 +312,7 @@ async function handleFineCommand(interaction) {
 
         return interaction.reply({
 
-            embeds:
-                [embed],
+            embeds: [embed],
 
             flags:
                 MessageFlags.Ephemeral
@@ -303,9 +325,7 @@ async function handleFineCommand(interaction) {
     // 💳 دفع مخالفة
     // =================================================
 
-    if (
-        command === 'pay-fine'
-    ) {
+    if (command === 'pay-fine') {
 
         const character =
             requireActiveCharacter(interaction);
@@ -361,9 +381,7 @@ async function handleFineCommand(interaction) {
         }
 
 
-        if (
-            fine.status === 'paid'
-        ) {
+        if (fine.status === 'paid') {
 
             return interaction.reply({
 
@@ -379,6 +397,23 @@ async function handleFineCommand(interaction) {
 
         const amount =
             Number(fine.amount || 0);
+
+
+        if (
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ قيمة المخالفة غير صحيحة.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
 
 
         if (
@@ -447,24 +482,13 @@ async function handleFineCommand(interaction) {
 
 
     // =================================================
-    // 👮 إضافة مخالفة - إدارة
+    // 👮 إضافة مخالفة - الشرطة
     // =================================================
 
-    if (
-        command === 'fine-add'
-    ) {
+    if (command === 'fine-add') {
 
-        if (!isAdmin(interaction)) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ هذا الأمر مخصص للإدارة فقط.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
+        if (!requirePolice(interaction)) {
+            return;
         }
 
 
@@ -611,24 +635,13 @@ async function handleFineCommand(interaction) {
 
 
     // =================================================
-    // 🗑️ حذف مخالفة - إدارة
+    // 🗑️ حذف مخالفة - الشرطة
     // =================================================
 
-    if (
-        command === 'fine-remove'
-    ) {
+    if (command === 'fine-remove') {
 
-        if (!isAdmin(interaction)) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ هذا الأمر مخصص للإدارة فقط.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
+        if (!requirePolice(interaction)) {
+            return;
         }
 
 
@@ -704,24 +717,13 @@ async function handleFineCommand(interaction) {
 
 
     // =================================================
-    // ⛔ إيقاف الخدمات - إدارة
+    // ⛔ إيقاف الخدمات - الشرطة
     // =================================================
 
-    if (
-        command === 'services-suspend'
-    ) {
+    if (command === 'services-suspend') {
 
-        if (!isAdmin(interaction)) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ هذا الأمر مخصص للإدارة فقط.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
+        if (!requirePolice(interaction)) {
+            return;
         }
 
 
@@ -815,24 +817,13 @@ async function handleFineCommand(interaction) {
 
 
     // =================================================
-    // ✅ تفعيل الخدمات - إدارة
+    // ✅ تفعيل الخدمات - الشرطة
     // =================================================
 
-    if (
-        command === 'services-activate'
-    ) {
+    if (command === 'services-activate') {
 
-        if (!isAdmin(interaction)) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ هذا الأمر مخصص للإدارة فقط.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
+        if (!requirePolice(interaction)) {
+            return;
         }
 
 
@@ -936,7 +927,5 @@ async function handleFineCommand(interaction) {
 // =====================================================
 
 module.exports = {
-
     handleFineCommand
-
 };
