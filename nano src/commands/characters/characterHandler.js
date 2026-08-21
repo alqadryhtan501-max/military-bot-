@@ -1,8 +1,8 @@
 const {
     EmbedBuilder,
     ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
+    StringSelectMenuBuilder,
+    StringSelectMenuOptionBuilder,
     ModalBuilder,
     TextInputBuilder,
     TextInputStyle,
@@ -23,11 +23,19 @@ async function showCharactersMenu(interaction) {
     // إنشاء حساب المستخدم إذا غير موجود
     citizens.createUser(userId);
 
-    const characters = citizens.getCharacters(userId);
-    const activeCharacter = citizens.getActiveCharacter(userId);
+    const characters =
+        citizens.getCharacters(userId);
+
+    const activeCharacter =
+        citizens.getActiveCharacter(userId);
+
+
+    // =================================================
+    // وصف اللوحة
+    // =================================================
 
     let description =
-        'من هنا تقدر تدير كركتراتك وتختار الكركتر الحالي.\n\n';
+        'من هنا تقدر تدير كركتراتك وتدخل وتخرج منها.\n\n';
 
     if (characters.length === 0) {
 
@@ -35,12 +43,12 @@ async function showCharactersMenu(interaction) {
             '❌ لا يوجد لديك أي كركتر حالياً.\n\n';
 
         description +=
-            'اضغط **إنشاء كركتر** لإنشاء أول كركتر لك.';
+            'اختر **Create Character** لإنشاء أول كركتر لك.';
 
     } else {
 
         description +=
-            `👤 عدد الكركترات: **${characters.length}**\n\n`;
+            `🎭 عدد الكركترات: **${characters.length}**\n\n`;
 
         if (activeCharacter) {
 
@@ -48,105 +56,171 @@ async function showCharactersMenu(interaction) {
                 `🟢 الكركتر الحالي: **${activeCharacter.name}**\n`;
 
             description +=
-                `🆔 رقم الكركتر: **${activeCharacter.citizenId}**`;
+                `🆔 الرقم: **${activeCharacter.citizenId}` +
+                '**';
 
         } else {
 
             description +=
-                '⚠️ لا يوجد كركتر محدد حالياً.';
+                '🔴 لا يوجد كركتر مسجل دخول حالياً.';
 
         }
     }
 
 
-    const embed = new EmbedBuilder()
-        .setTitle('🎭 نظام الكركترات')
-        .setDescription(description)
-        .setColor('#2b2d31')
-        .setTimestamp();
+    // =================================================
+    // Embed
+    // =================================================
+
+    const embed =
+        new EmbedBuilder()
+            .setTitle('🎭 نظام الكركترات')
+            .setDescription(description)
+            .setColor('#2b2d31')
+            .setTimestamp();
 
 
     // =================================================
-    // أزرار اللوحة
+    // القائمة الرئيسية
     // =================================================
 
-    const row = new ActionRowBuilder();
+    const menu =
+        new StringSelectMenuBuilder()
+            .setCustomId('character_action')
+            .setPlaceholder(
+                'Choose an action you want to make'
+            )
+            .addOptions(
 
-    row.addComponents(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Create Character')
+                    .setDescription(
+                        'لإنشاء كركتر جديد'
+                    )
+                    .setValue('character_create')
+                    .setEmoji('➕'),
 
-        new ButtonBuilder()
-            .setCustomId('character_create')
-            .setLabel('إنشاء كركتر')
-            .setEmoji('➕')
-            .setStyle(ButtonStyle.Success),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Character Login')
+                    .setDescription(
+                        'لتسجيل الدخول في الكركتر'
+                    )
+                    .setValue('character_login')
+                    .setEmoji('🔐'),
 
-        new ButtonBuilder()
-            .setCustomId('character_list')
-            .setLabel('كركتراتي')
-            .setEmoji('👤')
-            .setStyle(ButtonStyle.Primary),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Character Logout')
+                    .setDescription(
+                        'لتسجيل الخروج من الكركتر الحالي'
+                    )
+                    .setValue('character_logout')
+                    .setEmoji('🚪'),
 
-        new ButtonBuilder()
-            .setCustomId('character_select')
-            .setLabel('اختيار كركتر')
-            .setEmoji('🔄')
-            .setStyle(ButtonStyle.Secondary),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Show Identity')
+                    .setDescription(
+                        'لعرض بيانات الكركتر الحالي'
+                    )
+                    .setValue('character_identity')
+                    .setEmoji('🪪'),
 
-        new ButtonBuilder()
-            .setCustomId('character_delete')
-            .setLabel('حذف كركتر')
-            .setEmoji('🗑️')
-            .setStyle(ButtonStyle.Danger)
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Delete Character')
+                    .setDescription(
+                        'لحذف كركتر'
+                    )
+                    .setValue('character_delete')
+                    .setEmoji('🗑️')
 
-    );
+            );
 
+
+    const row =
+        new ActionRowBuilder()
+            .addComponents(menu);
+
+
+    // =================================================
+    // إرسال اللوحة
+    // =================================================
 
     return interaction.reply({
+
         embeds: [embed],
+
         components: [row]
+
     });
 }
 
 
 // =====================================================
-// أزرار الكركترات
+// القائمة الرئيسية للكركترات
 // =====================================================
 
 async function handleCharacterButtons(interaction) {
 
-    const customId = interaction.customId;
-    const userId = interaction.user.id;
+    const userId =
+        interaction.user.id;
+
+    const value =
+        interaction.values
+            ? interaction.values[0]
+            : interaction.customId;
 
 
     // =================================================
     // إنشاء كركتر
     // =================================================
 
-    if (customId === 'character_create') {
+    if (value === 'character_create') {
 
-        const modal = new ModalBuilder()
-            .setCustomId('character_create_modal')
-            .setTitle('🎭 إنشاء كركتر');
-
-
-        const nameInput = new TextInputBuilder()
-            .setCustomId('character_name')
-            .setLabel('اسم الكركتر')
-            .setPlaceholder('مثال: محمد أحمد')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMinLength(2)
-            .setMaxLength(50);
+        const modal =
+            new ModalBuilder()
+                .setCustomId(
+                    'character_create_modal'
+                )
+                .setTitle(
+                    '🎭 إنشاء كركتر'
+                );
 
 
-        const ageInput = new TextInputBuilder()
-            .setCustomId('character_age')
-            .setLabel('العمر')
-            .setPlaceholder('مثال: 25')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMinLength(1)
-            .setMaxLength(3);
+        const nameInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_name'
+                )
+                .setLabel(
+                    'اسم الكركتر'
+                )
+                .setPlaceholder(
+                    'مثال: محمد أحمد'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(2)
+                .setMaxLength(50);
+
+
+        const ageInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_age'
+                )
+                .setLabel(
+                    'العمر'
+                )
+                .setPlaceholder(
+                    'مثال: 25'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(3);
 
 
         modal.addComponents(
@@ -165,10 +239,10 @@ async function handleCharacterButtons(interaction) {
 
 
     // =================================================
-    // عرض الكركترات
+    // تسجيل الدخول
     // =================================================
 
-    if (customId === 'character_list') {
+    if (value === 'character_login') {
 
         const characters =
             citizens.getCharacters(userId);
@@ -177,79 +251,266 @@ async function handleCharacterButtons(interaction) {
         if (characters.length === 0) {
 
             return interaction.reply({
+
                 content:
-                    '❌ ما عندك أي كركتر حالياً.',
+                    '❌ ما عندك أي كركتر.\n\n' +
+                    'أنشئ كركتر أولاً.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
 
-        let text =
-            '🎭 **كركتراتك:**\n\n';
+        const options =
+            characters.map(character => {
+
+                return new StringSelectMenuOptionBuilder()
+
+                    .setLabel(
+                        character.name
+                    )
+
+                    .setDescription(
+                        `رقم الكركتر: ${character.citizenId} | العمر: ${character.age}`
+                    )
+
+                    .setValue(
+                        String(
+                            character.citizenId
+                        )
+                    )
+
+                    .setEmoji(
+                        character.active
+                            ? '🟢'
+                            : '👤'
+                    );
+
+            });
 
 
-        characters.forEach(
-            (character, index) => {
+        const menu =
+            new StringSelectMenuBuilder()
+                .setCustomId(
+                    'character_login_select'
+                )
+                .setPlaceholder(
+                    'اختر الكركتر لتسجيل الدخول'
+                )
+                .addOptions(options);
 
-                const active =
-                    character.active
-                        ? ' 🟢 **الحالي**'
-                        : '';
 
-
-                text +=
-                    `${index + 1}. **${character.name}**${active}\n`;
-
-                text +=
-                    `🆔 رقم الكركتر: \`${character.citizenId}\`\n`;
-
-                text +=
-                    `🎂 العمر: ${character.age}\n`;
-
-                text +=
-                    `💵 الكاش: ${character.cash}\n`;
-
-                text +=
-                    `🏦 البنك: ${character.bank}\n`;
-
-                if (character.job) {
-
-                    text +=
-                        `💼 الوظيفة: ${character.job}\n`;
-
-                }
-
-                text += '\n';
-
-            }
-        );
+        const row =
+            new ActionRowBuilder()
+                .addComponents(menu);
 
 
         return interaction.reply({
-            content: text,
-            flags: MessageFlags.Ephemeral
+
+            content:
+                '🔐 **Character Login**\n\n' +
+                'اختر الكركتر الذي تريد تسجيل الدخول إليه:',
+
+            components:
+                [row],
+
+            flags:
+                MessageFlags.Ephemeral
+
         });
     }
 
 
     // =================================================
-    // اختيار كركتر
+    // تسجيل الخروج
     // =================================================
 
-    if (customId === 'character_select') {
+    if (value === 'character_logout') {
+
+        const activeCharacter =
+            citizens.getActiveCharacter(
+                userId
+            );
+
+
+        if (!activeCharacter) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ أنت غير مسجل دخول في أي كركتر حالياً.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // تسجيل الخروج
+        if (
+            typeof citizens.logoutCharacter ===
+            'function'
+        ) {
+
+            citizens.logoutCharacter(
+                userId
+            );
+
+        } else {
+
+            // احتياط إذا لم تكن الدالة موجودة
+            citizens.setActiveCharacter(
+                userId,
+                null
+            );
+
+        }
+
+
+        return interaction.reply({
+
+            content:
+                `🚪 تم تسجيل الخروج من الكركتر **${activeCharacter.name}**.`,
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+    }
+
+
+    // =================================================
+    // عرض الهوية
+    // =================================================
+
+    if (value === 'character_identity') {
+
+        const activeCharacter =
+            citizens.getActiveCharacter(
+                userId
+            );
+
+
+        if (!activeCharacter) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ لا يوجد كركتر مسجل دخول حالياً.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        const embed =
+            new EmbedBuilder()
+
+                .setTitle(
+                    '🪪 هوية الكركتر'
+                )
+
+                .setDescription(
+                    `### ${activeCharacter.name}`
+                )
+
+                .addFields(
+
+                    {
+                        name: '🆔 رقم الكركتر',
+                        value:
+                            `\`${activeCharacter.citizenId}\``,
+                        inline: true
+                    },
+
+                    {
+                        name: '🎂 العمر',
+                        value:
+                            String(
+                                activeCharacter.age
+                            ),
+                        inline: true
+                    },
+
+                    {
+                        name: '💵 الكاش',
+                        value:
+                            String(
+                                activeCharacter.cash
+                            ),
+                        inline: true
+                    },
+
+                    {
+                        name: '🏦 البنك',
+                        value:
+                            String(
+                                activeCharacter.bank
+                            ),
+                        inline: true
+                    },
+
+                    {
+                        name: '💼 الوظيفة',
+                        value:
+                            activeCharacter.job ||
+                            'لا يوجد',
+                        inline: true
+                    },
+
+                    {
+                        name: '⭐ الرتبة',
+                        value:
+                            activeCharacter.rank ||
+                            'لا يوجد',
+                        inline: true
+                    }
+
+                )
+
+                .setColor('#2b2d31')
+                .setTimestamp();
+
+
+        return interaction.reply({
+
+            embeds:
+                [embed],
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+    }
+
+
+    // =================================================
+    // حذف كركتر
+    // =================================================
+
+    if (value === 'character_delete') {
 
         const characters =
-            citizens.getCharacters(userId);
+            citizens.getCharacters(
+                userId
+            );
 
 
         if (characters.length === 0) {
 
             return interaction.reply({
+
                 content:
-                    '❌ ما عندك أي كركتر تختاره.',
+                    '❌ ما عندك أي كركتر لحذفه.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
@@ -257,10 +518,10 @@ async function handleCharacterButtons(interaction) {
         const modal =
             new ModalBuilder()
                 .setCustomId(
-                    'character_select_modal'
+                    'character_delete_modal'
                 )
                 .setTitle(
-                    '🔄 اختيار كركتر'
+                    '🗑️ حذف كركتر'
                 );
 
 
@@ -296,85 +557,113 @@ async function handleCharacterButtons(interaction) {
 
 
     // =================================================
-    // حذف كركتر
-    // =================================================
-
-    if (customId === 'character_delete') {
-
-        const characters =
-            citizens.getCharacters(userId);
-
-
-        if (characters.length === 0) {
-
-            return interaction.reply({
-                content:
-                    '❌ ما عندك أي كركتر لحذفه.',
-                flags:
-                    MessageFlags.Ephemeral
-            });
-        }
-
-
-        const modal =
-            new ModalBuilder()
-                .setCustomId(
-                    'character_delete_modal'
-                )
-                .setTitle(
-                    '🗑️ حذف كركتر'
-                );
-
-
-        const idInput =
-            new TextInputBuilder()
-                .setCustomId(
-                    'character_id'
-                )
-                .setLabel(
-                    'رقم الكركتر'
-                )
-                .setPlaceholder(
-                    'اكتب رقم الكركتر الذي تريد حذفه'
-                )
-                .setStyle(
-                    TextInputStyle.Short
-                )
-                .setRequired(true)
-                .setMinLength(5)
-                .setMaxLength(5);
-
-
-        modal.addComponents(
-
-            new ActionRowBuilder()
-                .addComponents(idInput)
-
-        );
-
-
-        return interaction.showModal(modal);
-    }
-
-
-    // =================================================
-    // زر غير معروف
+    // خيار غير معروف
     // =================================================
 
     return interaction.reply({
+
         content:
-            '❌ زر كركترات غير معروف.',
+            '❌ خيار غير معروف.',
+
         flags:
             MessageFlags.Ephemeral
+
     });
 }
 
 
 // =====================================================
-// Modals الكركترات
+// تسجيل الدخول بكركتر محدد
 // =====================================================
 
-async function handleCharacterModals(interaction) {
+async function handleCharacterLogin(
+    interaction
+) {
+
+    const userId =
+        interaction.user.id;
+
+    const citizenId =
+        interaction.values[0];
+
+
+    const characters =
+        citizens.getCharacters(
+            userId
+        );
+
+
+    const character =
+        characters.find(
+
+            item =>
+                String(
+                    item.citizenId
+                ) ===
+                String(
+                    citizenId
+                )
+
+        );
+
+
+    if (!character) {
+
+        return interaction.reply({
+
+            content:
+                '❌ هذا الكركتر غير موجود في حسابك.',
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+    }
+
+
+    const selected =
+        citizens.setActiveCharacter(
+            userId,
+            citizenId
+        );
+
+
+    if (!selected) {
+
+        return interaction.reply({
+
+            content:
+                '❌ تعذر تسجيل الدخول بالكركتر.',
+
+            flags:
+                MessageFlags.Ephemeral
+
+        });
+    }
+
+
+    return interaction.reply({
+
+        content:
+            `🔐 **تم تسجيل الدخول بنجاح!**\n\n` +
+            `👤 الكركتر: **${selected.name}**\n` +
+            `🆔 الرقم: \`${selected.citizenId}\`\n` +
+            `🎂 العمر: **${selected.age}**`,
+
+        flags:
+            MessageFlags.Ephemeral
+
+    });
+}
+
+
+// =====================================================
+// Modals
+// =====================================================
+
+async function handleCharacterModals(
+    interaction
+) {
 
     const customId =
         interaction.customId;
@@ -412,26 +701,25 @@ async function handleCharacterModals(interaction) {
             Number(ageText);
 
 
-        // =================================================
         // التحقق من الاسم
-        // =================================================
 
         if (
             name.length < 2
         ) {
 
             return interaction.reply({
+
                 content:
                     '❌ اسم الكركتر قصير جداً.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
 
-        // =================================================
         // التحقق من العمر
-        // =================================================
 
         if (
             !Number.isInteger(age) ||
@@ -440,33 +728,41 @@ async function handleCharacterModals(interaction) {
         ) {
 
             return interaction.reply({
+
                 content:
                     '❌ العمر غير صحيح.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
 
-        // =================================================
         // إنشاء الكركتر
-        // =================================================
 
         const character =
             citizens.createCharacter(
+
                 userId,
+
                 name,
+
                 age
+
             );
 
 
         if (!character) {
 
             return interaction.reply({
+
                 content:
                     '❌ تعذر إنشاء الكركتر.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
@@ -477,89 +773,9 @@ async function handleCharacterModals(interaction) {
                 `✅ **تم إنشاء الكركتر بنجاح!**\n\n` +
                 `👤 الاسم: **${character.name}**\n` +
                 `🎂 العمر: **${character.age}**\n` +
-                `🆔 رقم الكركتر: **${character.citizenId}**\n\n` +
+                `🆔 رقم الكركتر: \`${character.citizenId}\`\n\n` +
                 `💵 الكاش: **${character.cash}**\n` +
                 `🏦 البنك: **${character.bank}**`,
-
-            flags:
-                MessageFlags.Ephemeral
-
-        });
-    }
-
-
-    // =================================================
-    // اختيار كركتر
-    // =================================================
-
-    if (
-        customId ===
-        'character_select_modal'
-    ) {
-
-        const citizenId =
-            interaction.fields
-                .getTextInputValue(
-                    'character_id'
-                )
-                .trim();
-
-
-        const characters =
-            citizens.getCharacters(
-                userId
-            );
-
-
-        const character =
-            characters.find(
-                item =>
-                    String(
-                        item.citizenId
-                    ) ===
-                    String(
-                        citizenId
-                    )
-            );
-
-
-        if (!character) {
-
-            return interaction.reply({
-                content:
-                    '❌ هذا الكركتر غير موجود في حسابك.',
-                flags:
-                    MessageFlags.Ephemeral
-            });
-        }
-
-
-        const selected =
-            citizens.setActiveCharacter(
-                userId,
-                citizenId
-            );
-
-
-        if (!selected) {
-
-            return interaction.reply({
-                content:
-                    '❌ تعذر اختيار الكركتر.',
-                flags:
-                    MessageFlags.Ephemeral
-            });
-        }
-
-
-        return interaction.reply({
-
-            content:
-                `🟢 **تم اختيار الكركتر بنجاح!**\n\n` +
-                `👤 الكركتر الحالي: **${selected.name}**\n` +
-                `🆔 رقم الكركتر: **${selected.citizenId}**\n\n` +
-                `💵 الكاش: **${selected.cash}**\n` +
-                `🏦 البنك: **${selected.bank}**`,
 
             flags:
                 MessageFlags.Ephemeral
@@ -593,6 +809,7 @@ async function handleCharacterModals(interaction) {
 
         const character =
             characters.find(
+
                 item =>
                     String(
                         item.citizenId
@@ -600,45 +817,47 @@ async function handleCharacterModals(interaction) {
                     String(
                         citizenId
                     )
+
             );
 
 
         if (!character) {
 
             return interaction.reply({
+
                 content:
                     '❌ هذا الكركتر غير موجود في حسابك.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
 
-        // =================================================
-        // حذف الكركتر
-        // =================================================
-
         const deleted =
             citizens.deleteCharacter(
+
                 userId,
+
                 citizenId
+
             );
 
 
         if (!deleted) {
 
             return interaction.reply({
+
                 content:
                     '❌ تعذر حذف الكركتر.',
+
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
-
-        // =================================================
-        // معرفة الكركتر الحالي الجديد
-        // =================================================
 
         const newActive =
             citizens.getActiveCharacter(
@@ -648,19 +867,19 @@ async function handleCharacterModals(interaction) {
 
         let message =
             `🗑️ **تم حذف الكركتر بنجاح.**\n\n` +
-            `👤 الكركتر المحذوف: **${deleted.name}**\n` +
-            `🆔 الرقم: **${deleted.citizenId}**`;
+            `👤 المحذوف: **${deleted.name}**\n` +
+            `🆔 الرقم: \`${deleted.citizenId}\``;
 
 
         if (newActive) {
 
             message +=
-                `\n\n🟢 الكركتر الحالي الجديد: **${newActive.name}**`;
+                `\n\n🟢 الكركتر الحالي: **${newActive.name}**`;
 
         } else {
 
             message +=
-                '\n\n⚠️ لم يعد لديك أي كركتر حالي.';
+                '\n\n🔴 لا يوجد كركتر مسجل دخول حالياً.';
 
         }
 
@@ -682,10 +901,13 @@ async function handleCharacterModals(interaction) {
     // =================================================
 
     return interaction.reply({
+
         content:
-            '❌ نموذج كركترات غير معروف.',
+            '❌ نموذج كركتر غير معروف.',
+
         flags:
             MessageFlags.Ephemeral
+
     });
 }
 
@@ -699,6 +921,8 @@ module.exports = {
     showCharactersMenu,
 
     handleCharacterButtons,
+
+    handleCharacterLogin,
 
     handleCharacterModals
 
