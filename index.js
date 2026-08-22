@@ -51,6 +51,7 @@ const GUILD_ID =
 // =====================================================
 
 if (!DISCORD_TOKEN) {
+
     console.error(
         '❌ DISCORD_TOKEN غير موجود في ملف .env'
     );
@@ -59,6 +60,7 @@ if (!DISCORD_TOKEN) {
 }
 
 if (!GUILD_ID) {
+
     console.warn(
         '⚠️ GUILD_ID غير موجود في ملف .env'
     );
@@ -70,11 +72,13 @@ if (!GUILD_ID) {
 // =====================================================
 
 const client = new Client({
+
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent
     ]
+
 });
 
 
@@ -86,15 +90,19 @@ client.once('clientReady', () => {
 
     console.log('');
     console.log('======================================');
+
     console.log(
         `🤖 تم تشغيل البوت بنجاح: ${client.user.tag}`
     );
+
     console.log(
         `📡 مرتبط بالسيرفر رقم: ${GUILD_ID}`
     );
+
     console.log(
         `🆔 Bot ID: ${client.user.id}`
     );
+
     console.log('======================================');
     console.log('');
 
@@ -120,7 +128,6 @@ client.on(
                 const commandName =
                     interaction.commandName;
 
-
                 console.log(
                     `📥 Command: ${commandName}`
                 );
@@ -128,11 +135,11 @@ client.on(
 
                 // =================================================
                 // نظام الكركترات
+                // /characters
                 // =================================================
 
                 if (
-                    commandName ===
-                    'setup-characters'
+                    commandName === 'characters'
                 ) {
 
                     if (
@@ -146,12 +153,14 @@ client.on(
                         );
 
                         return await interaction.reply({
+
                             content:
                                 '❌ نظام الكركترات غير جاهز.',
+
                             flags:
                                 MessageFlags.Ephemeral
-                        });
 
+                        });
                     }
 
                     return await characterHandler.showCharactersMenu(
@@ -165,8 +174,7 @@ client.on(
                 // =================================================
 
                 if (
-                    commandName ===
-                    'setup-panel'
+                    commandName === 'setup-panel'
                 ) {
 
                     return await setupPanel.execute(
@@ -180,6 +188,7 @@ client.on(
                 // =================================================
 
                 const bankCommands = [
+
                     'bank',
                     'deposit',
                     'withdraw',
@@ -190,8 +199,8 @@ client.on(
                     'bank-reset',
                     'bank-set',
                     'bank-info'
-                ];
 
+                ];
 
                 if (
                     bankCommands.includes(
@@ -218,14 +227,103 @@ client.on(
 
 
             // =================================================
-            // Buttons
+            // String Select Menus
             // =================================================
 
-            if (interaction.isButton()) {
+            if (
+                interaction.isStringSelectMenu()
+            ) {
 
                 const customId =
                     interaction.customId;
 
+                console.log(
+                    `📋 Select Menu: ${customId}`
+                );
+
+
+                // =================================================
+                // القائمة الرئيسية للكركترات
+                // =================================================
+
+                if (
+                    customId ===
+                    'character_action'
+                ) {
+
+                    if (
+                        !characterHandler ||
+                        typeof characterHandler.handleCharacterButtons !==
+                        'function'
+                    ) {
+
+                        return await interaction.reply({
+
+                            content:
+                                '❌ نظام الكركترات غير جاهز.',
+
+                            flags:
+                                MessageFlags.Ephemeral
+
+                        });
+                    }
+
+                    return await characterHandler.handleCharacterButtons(
+                        interaction
+                    );
+                }
+
+
+                // =================================================
+                // اختيار كركتر لتسجيل الدخول
+                // =================================================
+
+                if (
+                    customId ===
+                    'character_login_select'
+                ) {
+
+                    if (
+                        !characterHandler ||
+                        typeof characterHandler.handleCharacterLogin !==
+                        'function'
+                    ) {
+
+                        return await interaction.reply({
+
+                            content:
+                                '❌ نظام تسجيل الدخول للكركتر غير جاهز.',
+
+                            flags:
+                                MessageFlags.Ephemeral
+
+                        });
+                    }
+
+                    return await characterHandler.handleCharacterLogin(
+                        interaction
+                    );
+                }
+
+
+                // =================================================
+                // باقي القوائم
+                // =================================================
+
+                return;
+            }
+
+
+            // =================================================
+            // Buttons
+            // =================================================
+
+            if (
+                interaction.isButton()
+            ) {
+
+                const customId =
+                    interaction.customId;
 
                 console.log(
                     `🔘 Button: ${customId}`
@@ -249,12 +347,14 @@ client.on(
                     ) {
 
                         return await interaction.reply({
+
                             content:
                                 '❌ نظام أزرار الكركترات غير جاهز.',
+
                             flags:
                                 MessageFlags.Ephemeral
-                        });
 
+                        });
                     }
 
                     return await characterHandler.handleCharacterButtons(
@@ -277,11 +377,12 @@ client.on(
             // Modals
             // =================================================
 
-            if (interaction.isModalSubmit()) {
+            if (
+                interaction.isModalSubmit()
+            ) {
 
                 const customId =
                     interaction.customId;
-
 
                 console.log(
                     `📝 Modal: ${customId}`
@@ -305,12 +406,14 @@ client.on(
                     ) {
 
                         return await interaction.reply({
+
                             content:
                                 '❌ نظام مودالات الكركترات غير جاهز.',
+
                             flags:
                                 MessageFlags.Ephemeral
-                        });
 
+                        });
                     }
 
                     return await characterHandler.handleCharacterModals(
@@ -360,19 +463,25 @@ client.on(
                 ) {
 
                     await interaction.followUp({
+
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
+
                         flags:
                             MessageFlags.Ephemeral
+
                     });
 
                 } else {
 
                     await interaction.reply({
+
                         content:
                             '❌ حدث خطأ أثناء تنفيذ العملية.',
+
                         flags:
                             MessageFlags.Ephemeral
+
                     });
                 }
 
