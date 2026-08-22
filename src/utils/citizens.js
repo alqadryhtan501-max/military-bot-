@@ -83,16 +83,6 @@ function saveCitizens(data) {
 
 // =====================================================
 // حساب Discord
-//
-// شكل البيانات:
-//
-// {
-//     "DISCORD_ID": {
-//         discordId,
-//         activeCharacterId,
-//         characters: []
-//     }
-// }
 // =====================================================
 
 function getUser(userId) {
@@ -316,7 +306,7 @@ function setActiveCharacter(
 
 
 // =====================================================
-// تسجيل الخروج من الكركتر
+// تسجيل الخروج
 // =====================================================
 
 function logoutCharacter(userId) {
@@ -332,16 +322,8 @@ function logoutCharacter(userId) {
     }
 
 
-    // =================================================
-    // إلغاء الكركتر الحالي
-    // =================================================
-
     user.activeCharacterId = null;
 
-
-    // =================================================
-    // إلغاء Active من جميع الكركترات
-    // =================================================
 
     if (Array.isArray(user.characters)) {
 
@@ -393,7 +375,7 @@ function generateCitizenId() {
 //
 // userId
 // name
-// psn
+// psId
 // dateOfBirth
 // birthPlace
 // gender
@@ -402,7 +384,7 @@ function generateCitizenId() {
 function createCharacter(
     userId,
     name,
-    psn,
+    psId,
     dateOfBirth,
     birthPlace,
     gender
@@ -436,7 +418,9 @@ function createCharacter(
 
 
     if (!Array.isArray(user.characters)) {
+
         user.characters = [];
+
     }
 
 
@@ -478,8 +462,9 @@ function createCharacter(
         name:
             String(name || '').trim(),
 
-        psn:
-            String(psn || '').trim(),
+        // PS ID
+        psId:
+            String(psId || '').trim(),
 
         dateOfBirth:
             String(dateOfBirth || '').trim(),
@@ -495,7 +480,6 @@ function createCharacter(
         // الحالة
         // ==========================
 
-        // إنشاء الكركتر لا يعني تسجيل الدخول
         active: false,
 
 
@@ -563,9 +547,6 @@ function createCharacter(
 
     // =================================================
     // إضافة الكركتر
-    //
-    // ملاحظة:
-    // لا يتم تسجيل الدخول تلقائياً
     // =================================================
 
     user.characters.push(
@@ -631,21 +612,11 @@ function deleteCharacter(
         citizenId;
 
 
-    // =================================================
-    // حذف الكركتر
-    // =================================================
-
     user.characters.splice(
         index,
         1
     );
 
-
-    // =================================================
-    // إذا كان المحذوف هو الحالي
-    //
-    // لا يتم تسجيل الدخول بكركتر آخر
-    // =================================================
 
     if (wasActive) {
 
@@ -1082,22 +1053,13 @@ function getCitizenByUserId(userId) {
 // =====================================================
 // إنشاء Citizen قديم
 // =====================================================
-//
-// أبقيناه حتى لا تتعطل الأكواد القديمة.
-//
-// البيانات الجديدة الاختيارية:
-//
-// psn
-// dateOfBirth
-// birthPlace
-// gender
-// =====================================================
 
 function createCitizen({
     citizenId,
     userId,
     name,
     age,
+    psId,
     psn,
     dateOfBirth,
     birthPlace,
@@ -1158,16 +1120,21 @@ function createCitizen({
         name:
             String(name || '').trim(),
 
-        // توافق قديم
         age:
             age !== undefined &&
             age !== null
                 ? Number(age)
                 : null,
 
-        // البيانات الجديدة
-        psn:
-            String(psn || '').trim(),
+        // PS ID
+        // psId هو الأساسي
+        // psn موجود للتوافق مع الأكواد القديمة
+        psId:
+            String(
+                psId ||
+                psn ||
+                ''
+            ).trim(),
 
         dateOfBirth:
             String(dateOfBirth || '').trim(),
@@ -1208,19 +1175,9 @@ function createCitizen({
     };
 
 
-    // =================================================
-    // إضافة
-    // =================================================
-
     data[userId]
         .characters
         .push(character);
-
-
-    // =================================================
-    // مهم:
-    // إنشاء Citizen لا يعني تسجيل الدخول
-    // =================================================
 
 
     saveCitizens(data);
@@ -1235,29 +1192,13 @@ function createCitizen({
 
 module.exports = {
 
-    // ==========================
-    // إعدادات
-    // ==========================
-
     MAX_CHARACTERS,
-
-    // ==========================
-    // قاعدة البيانات
-    // ==========================
 
     loadCitizens,
     saveCitizens,
 
-    // ==========================
-    // المستخدمين
-    // ==========================
-
     getUser,
     createUser,
-
-    // ==========================
-    // الكركترات
-    // ==========================
 
     getCharacters,
     getCharacter,
@@ -1269,23 +1210,11 @@ module.exports = {
 
     canCreateCharacter,
 
-    // ==========================
-    // الكركتر الحالي
-    // ==========================
-
     getActiveCharacter,
     setActiveCharacter,
     logoutCharacter,
 
-    // ==========================
-    // الهوية
-    // ==========================
-
     generateCitizenId,
-
-    // ==========================
-    // الأموال
-    // ==========================
 
     addCash,
     removeCash,
@@ -1293,21 +1222,9 @@ module.exports = {
     removeBank,
     resetMoney,
 
-    // ==========================
-    // المخالفات
-    // ==========================
-
     addFine,
 
-    // ==========================
-    // المعاملات
-    // ==========================
-
     addTransaction,
-
-    // ==========================
-    // توافق قديم
-    // ==========================
 
     getCitizen,
     getCitizenByUserId,
