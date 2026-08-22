@@ -9,7 +9,8 @@ const {
     MessageFlags
 } = require('discord.js');
 
-const citizens = require('../../utils/citizens');
+const citizens =
+    require('../../utils/citizens');
 
 
 // =====================================================
@@ -18,7 +19,8 @@ const citizens = require('../../utils/citizens');
 
 async function showCharactersMenu(interaction) {
 
-    const userId = interaction.user.id;
+    const userId =
+        interaction.user.id;
 
     // إنشاء حساب المستخدم إذا غير موجود
     citizens.createUser(userId);
@@ -30,9 +32,12 @@ async function showCharactersMenu(interaction) {
         citizens.getActiveCharacter(userId);
 
 
+    // =================================================
+    // وصف اللوحة
+    // =================================================
+
     let description =
         'من هنا تقدر تدير كركتراتك وتدخل وتخرج منها.\n\n';
-
 
     if (characters.length === 0) {
 
@@ -53,7 +58,7 @@ async function showCharactersMenu(interaction) {
                 `🟢 الكركتر الحالي: **${activeCharacter.name}**\n`;
 
             description +=
-                `🆔 الرقم: **${activeCharacter.citizenId}`;
+                `🆔 الرقم: **${activeCharacter.citizenId}**`;
 
         } else {
 
@@ -63,6 +68,10 @@ async function showCharactersMenu(interaction) {
     }
 
 
+    // =================================================
+    // Embed
+    // =================================================
+
     const embed =
         new EmbedBuilder()
             .setTitle('🎭 نظام الكركترات')
@@ -70,6 +79,10 @@ async function showCharactersMenu(interaction) {
             .setColor('#2b2d31')
             .setTimestamp();
 
+
+    // =================================================
+    // القائمة الرئيسية
+    // =================================================
 
     const menu =
         new StringSelectMenuBuilder()
@@ -110,20 +123,28 @@ async function showCharactersMenu(interaction) {
             .addComponents(menu);
 
 
+    // =================================================
+    // إرسال اللوحة
+    // =================================================
+
     return interaction.reply({
+
         embeds: [embed],
+
         components: [row]
+
     });
 }
 
 
 // =====================================================
-// القائمة الرئيسية للكركترات
+// التعامل مع القائمة الرئيسية
 // =====================================================
 
 async function handleCharacterButtons(interaction) {
 
-    const userId = interaction.user.id;
+    const userId =
+        interaction.user.id;
 
     const value =
         interaction.values
@@ -141,19 +162,26 @@ async function handleCharacterButtons(interaction) {
             citizens.getCharacters(userId);
 
 
+        // الحد الأقصى
+
         if (characters.length >= citizens.MAX_CHARACTERS) {
 
             return interaction.reply({
 
                 content:
                     '❌ وصلت للحد الأقصى.\n\n' +
-                    'يمكنك امتلاك **3 كركترات فقط**.',
+                    `يمكنك امتلاك **${citizens.MAX_CHARACTERS} كركترات فقط**.`,
 
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
+
+        // =================================================
+        // Modal
+        // =================================================
 
         const modal =
             new ModalBuilder()
@@ -165,7 +193,10 @@ async function handleCharacterButtons(interaction) {
                 );
 
 
+        // =================================================
         // الاسم
+        // =================================================
+
         const nameInput =
             new TextInputBuilder()
                 .setCustomId(
@@ -185,7 +216,10 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(50);
 
 
+        // =================================================
         // PS ID
+        // =================================================
+
         const psIdInput =
             new TextInputBuilder()
                 .setCustomId(
@@ -205,7 +239,10 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(30);
 
 
+        // =================================================
         // تاريخ الميلاد
+        // =================================================
+
         const birthDateInput =
             new TextInputBuilder()
                 .setCustomId(
@@ -225,7 +262,10 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(10);
 
 
+        // =================================================
         // مكان الميلاد
+        // =================================================
+
         const birthPlaceInput =
             new TextInputBuilder()
                 .setCustomId(
@@ -245,7 +285,10 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(50);
 
 
+        // =================================================
         // الجنس
+        // =================================================
+
         const genderInput =
             new TextInputBuilder()
                 .setCustomId(
@@ -264,6 +307,10 @@ async function handleCharacterButtons(interaction) {
                 .setMinLength(2)
                 .setMaxLength(10);
 
+
+        // =================================================
+        // إضافة الحقول
+        // =================================================
 
         modal.addComponents(
 
@@ -309,36 +356,43 @@ async function handleCharacterButtons(interaction) {
 
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
 
+        // =================================================
+        // عرض الكركترات
+        // =================================================
+
         const options =
             characters
-                .slice(0, 3)
-                .map(character => {
+                .slice(0, citizens.MAX_CHARACTERS)
+                .map(
+                    character => {
 
-                    return new StringSelectMenuOptionBuilder()
+                        return new StringSelectMenuOptionBuilder()
 
-                        .setLabel(
-                            character.name
-                        )
+                            .setLabel(
+                                character.name || 'بدون اسم'
+                            )
 
-                        .setDescription(
-                            `رقم الهوية: ${character.citizenId}`
-                        )
+                            .setDescription(
+                                `رقم الهوية: ${character.citizenId}`
+                            )
 
-                        .setValue(
-                            String(character.citizenId)
-                        )
+                            .setValue(
+                                String(character.citizenId)
+                            )
 
-                        .setEmoji(
-                            character.active
-                                ? '🟢'
-                                : '👤'
-                        );
+                            .setEmoji(
+                                character.active
+                                    ? '🟢'
+                                    : '👤'
+                            );
 
-                });
+                    }
+                );
 
 
         const menu =
@@ -363,10 +417,12 @@ async function handleCharacterButtons(interaction) {
                 '🔐 **Character Login**\n\n' +
                 'اختر الكركتر الذي تريد تسجيل الدخول إليه:',
 
-            components: [row],
+            components:
+                [row],
 
             flags:
                 MessageFlags.Ephemeral
+
         });
     }
 
@@ -390,6 +446,7 @@ async function handleCharacterButtons(interaction) {
 
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
@@ -407,6 +464,7 @@ async function handleCharacterButtons(interaction) {
 
                 flags:
                     MessageFlags.Ephemeral
+
             });
         }
 
@@ -421,9 +479,14 @@ async function handleCharacterButtons(interaction) {
 
             flags:
                 MessageFlags.Ephemeral
+
         });
     }
 
+
+    // =================================================
+    // خيار غير معروف
+    // =================================================
 
     return interaction.reply({
 
@@ -432,6 +495,7 @@ async function handleCharacterButtons(interaction) {
 
         flags:
             MessageFlags.Ephemeral
+
     });
 }
 
@@ -440,7 +504,9 @@ async function handleCharacterButtons(interaction) {
 // تسجيل الدخول بكركتر محدد
 // =====================================================
 
-async function handleCharacterLogin(interaction) {
+async function handleCharacterLogin(
+    interaction
+) {
 
     const userId =
         interaction.user.id;
@@ -448,6 +514,10 @@ async function handleCharacterLogin(interaction) {
     const citizenId =
         interaction.values[0];
 
+
+    // =================================================
+    // التأكد من وجود الكركتر
+    // =================================================
 
     const character =
         citizens.getCharacter(
@@ -465,9 +535,14 @@ async function handleCharacterLogin(interaction) {
 
             flags:
                 MessageFlags.Ephemeral
+
         });
     }
 
+
+    // =================================================
+    // تسجيل الدخول
+    // =================================================
 
     const selected =
         citizens.setActiveCharacter(
@@ -485,9 +560,14 @@ async function handleCharacterLogin(interaction) {
 
             flags:
                 MessageFlags.Ephemeral
+
         });
     }
 
+
+    // =================================================
+    // الرد
+    // =================================================
 
     return interaction.reply({
 
@@ -508,6 +588,7 @@ async function handleCharacterLogin(interaction) {
 
         flags:
             MessageFlags.Ephemeral
+
     });
 }
 
@@ -516,7 +597,9 @@ async function handleCharacterLogin(interaction) {
 // Modals
 // =====================================================
 
-async function handleCharacterModals(interaction) {
+async function handleCharacterModals(
+    interaction
+) {
 
     const customId =
         interaction.customId;
@@ -525,292 +608,385 @@ async function handleCharacterModals(interaction) {
         interaction.user.id;
 
 
+    // =================================================
+    // إنشاء كركتر
+    // =================================================
+
     if (
-        customId !==
+        customId ===
         'character_create_modal'
     ) {
 
-        return interaction.reply({
+        // =================================================
+        // قراءة البيانات
+        // =================================================
 
-            content:
-                '❌ نموذج كركتر غير معروف.',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
-
-
-    // =================================================
-    // قراءة البيانات
-    // =================================================
-
-    const name =
-        interaction.fields
-            .getTextInputValue(
-                'character_name'
-            )
-            .trim();
+        const name =
+            interaction.fields
+                .getTextInputValue(
+                    'character_name'
+                )
+                .trim();
 
 
-    const psId =
-        interaction.fields
-            .getTextInputValue(
-                'character_psid'
-            )
-            .trim();
+        const psId =
+            interaction.fields
+                .getTextInputValue(
+                    'character_psid'
+                )
+                .trim();
 
 
-    const birthDate =
-        interaction.fields
-            .getTextInputValue(
-                'character_birthdate'
-            )
-            .trim();
+        const birthDate =
+            interaction.fields
+                .getTextInputValue(
+                    'character_birthdate'
+                )
+                .trim();
 
 
-    const birthPlace =
-        interaction.fields
-            .getTextInputValue(
-                'character_birthplace'
-            )
-            .trim();
+        const birthPlace =
+            interaction.fields
+                .getTextInputValue(
+                    'character_birthplace'
+                )
+                .trim();
 
 
-    const gender =
-        interaction.fields
-            .getTextInputValue(
-                'character_gender'
-            )
-            .trim();
+        const gender =
+            interaction.fields
+                .getTextInputValue(
+                    'character_gender'
+                )
+                .trim();
 
 
-    // =================================================
-    // التحقق من الاسم
-    // =================================================
+        // =================================================
+        // التحقق من الاسم
+        // =================================================
 
-    if (name.length < 2) {
+        if (name.length < 2) {
 
-        return interaction.reply({
+            return interaction.reply({
 
-            content:
-                '❌ الاسم قصير جداً.',
+                content:
+                    '❌ الاسم قصير جداً.',
 
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
+                flags:
+                    MessageFlags.Ephemeral
 
-
-    // =================================================
-    // التحقق من PS ID
-    // =================================================
-
-    if (psId.length < 2) {
-
-        return interaction.reply({
-
-            content:
-                '❌ PS ID غير صحيح.',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
+            });
+        }
 
 
-    // =================================================
-    // التحقق من تاريخ الميلاد
-    // =================================================
+        // =================================================
+        // التحقق من PS ID
+        // =================================================
 
-    const dateRegex =
-        /^\d{4}-\d{2}-\d{2}$/;
+        if (psId.length < 2) {
 
+            return interaction.reply({
 
-    if (!dateRegex.test(birthDate)) {
+                content:
+                    '❌ PS ID غير صحيح.',
 
-        return interaction.reply({
+                flags:
+                    MessageFlags.Ephemeral
 
-            content:
-                '❌ تاريخ الميلاد غير صحيح.\n' +
-                'استخدم الصيغة: **YYYY-MM-DD**',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
+            });
+        }
 
 
-    const [
-        year,
-        month,
-        day
-    ] =
-        birthDate
-            .split('-')
-            .map(Number);
+        // =================================================
+        // التحقق من تاريخ الميلاد
+        // =================================================
+
+        const dateRegex =
+            /^\d{4}-\d{2}-\d{2}$/;
 
 
-    const parsedDate =
-        new Date(
+        if (
+            !dateRegex.test(birthDate)
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد غير صحيح.\n' +
+                    'استخدم الصيغة: **YYYY-MM-DD**',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        const [
             year,
-            month - 1,
+            month,
             day
-        );
+        ] =
+            birthDate
+                .split('-')
+                .map(Number);
 
 
-    if (
-        parsedDate.getFullYear() !== year ||
-        parsedDate.getMonth() + 1 !== month ||
-        parsedDate.getDate() !== day
-    ) {
-
-        return interaction.reply({
-
-            content:
-                '❌ تاريخ الميلاد غير صحيح.',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
-
-
-    // =================================================
-    // مكان الميلاد
-    // =================================================
-
-    if (birthPlace.length < 2) {
-
-        return interaction.reply({
-
-            content:
-                '❌ مكان الميلاد غير صحيح.',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
-
-
-    // =================================================
-    // الجنس
-    // =================================================
-
-    const normalizedGender =
-        gender.toLowerCase();
-
-
-    if (
-        normalizedGender !== 'ذكر' &&
-        normalizedGender !== 'انثى' &&
-        normalizedGender !== 'أنثى' &&
-        normalizedGender !== 'male' &&
-        normalizedGender !== 'female'
-    ) {
-
-        return interaction.reply({
-
-            content:
-                '❌ الجنس غير صحيح.\n' +
-                'اكتب: **ذكر** أو **أنثى**',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
-
-
-    // =================================================
-    // الحد الأقصى
-    // =================================================
-
-    if (
-        !citizens.canCreateCharacter(userId)
-    ) {
-
-        return interaction.reply({
-
-            content:
-                '❌ لا يمكنك امتلاك أكثر من **3 كركترات**.',
-
-            flags:
-                MessageFlags.Ephemeral
-        });
-    }
-
-
-    // =================================================
-    // إنشاء الكركتر
-    // =================================================
-
-    let character;
-
-    try {
-
-        character =
-            citizens.createCharacter(
-                userId,
-                {
-                    name,
-                    psId,
-                    birthDate,
-                    birthPlace,
-                    gender
-                }
+        const parsedDate =
+            new Date(
+                year,
+                month - 1,
+                day
             );
 
-    } catch (error) {
 
-        console.error(
-            '❌ خطأ في إنشاء الكركتر:',
-            error
+        // =================================================
+        // التأكد من صحة التاريخ
+        // =================================================
+
+        if (
+            parsedDate.getFullYear() !== year ||
+            parsedDate.getMonth() + 1 !== month ||
+            parsedDate.getDate() !== day
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد غير صحيح.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // منع التاريخ المستقبلي
+        // =================================================
+
+        const today =
+            new Date();
+
+        today.setHours(
+            0,
+            0,
+            0,
+            0
         );
 
+
+        if (
+            parsedDate > today
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد لا يمكن أن يكون في المستقبل.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // مكان الميلاد
+        // =================================================
+
+        if (birthPlace.length < 2) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ مكان الميلاد غير صحيح.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // الجنس
+        // =================================================
+
+        const normalizedGender =
+            gender
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            normalizedGender !== 'ذكر' &&
+            normalizedGender !== 'انثى' &&
+            normalizedGender !== 'أنثى' &&
+            normalizedGender !== 'male' &&
+            normalizedGender !== 'female'
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ الجنس غير صحيح.\n' +
+                    'اكتب: **ذكر** أو **أنثى**',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // توحيد الجنس
+        // =================================================
+
+        let finalGender;
+
+        if (
+            normalizedGender === 'male' ||
+            normalizedGender === 'ذكر'
+        ) {
+
+            finalGender = 'ذكر';
+
+        } else {
+
+            finalGender = 'أنثى';
+
+        }
+
+
+        // =================================================
+        // التأكد من الحد الأقصى
+        // =================================================
+
+        const characters =
+            citizens.getCharacters(userId);
+
+
+        if (
+            characters.length >=
+            citizens.MAX_CHARACTERS
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    `❌ لا يمكنك امتلاك أكثر من **${citizens.MAX_CHARACTERS} كركترات**.`,
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // إنشاء الكركتر
+        // =================================================
+
+        let character;
+
+        try {
+
+            character =
+                citizens.createCharacter(
+                    userId,
+                    {
+                        name,
+                        psId,
+                        birthDate,
+                        birthPlace,
+                        gender: finalGender
+                    }
+                );
+
+        } catch (error) {
+
+            console.error(
+                '❌ خطأ في إنشاء الكركتر:',
+                error
+            );
+
+            return interaction.reply({
+
+                content:
+                    '❌ تعذر إنشاء الكركتر.\n' +
+                    'تأكد من صحة البيانات.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // فشل الإنشاء
+        // =================================================
+
+        if (!character) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تعذر إنشاء الكركتر.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // نجاح
+        // =================================================
+
         return interaction.reply({
 
             content:
-                '❌ تعذر إنشاء الكركتر.\n' +
-                'تأكد من صحة البيانات.',
+                `✅ **تم إنشاء الكركتر بنجاح!**\n\n` +
+                `👤 الاسم: **${character.name}**\n` +
+                `🎮 PS ID: **${character.psId}**\n` +
+                `🎂 تاريخ الميلاد: **${character.birthDate}**\n` +
+                `📍 مكان الميلاد: **${character.birthPlace}**\n` +
+                `⚧️ الجنس: **${character.gender}**\n` +
+                `🆔 رقم الهوية: \`${character.citizenId}\`\n\n` +
+                `💵 الكاش: **${Number(
+                    character.cash || 0
+                ).toLocaleString()} ريال**\n` +
+                `🏦 البنك: **${Number(
+                    character.bank || 0
+                ).toLocaleString()} ريال**\n\n` +
+                `🔴 لم يتم تسجيل الدخول تلقائياً.\n` +
+                `استخدم **Character Login** للدخول.`,
 
             flags:
                 MessageFlags.Ephemeral
-        });
-    }
 
-
-    if (!character) {
-
-        return interaction.reply({
-
-            content:
-                '❌ تعذر إنشاء الكركتر.',
-
-            flags:
-                MessageFlags.Ephemeral
         });
     }
 
 
     // =================================================
-    // نجاح
+    // Modal غير معروف
     // =================================================
 
     return interaction.reply({
 
         content:
-            `✅ **تم إنشاء الكركتر بنجاح!**\n\n` +
-            `👤 الاسم: **${character.name}**\n` +
-            `🎮 PS ID: **${character.psId}**\n` +
-            `🎂 تاريخ الميلاد: **${character.birthDate}**\n` +
-            `📍 مكان الميلاد: **${character.birthPlace}**\n` +
-            `⚧️ الجنس: **${character.gender}**\n` +
-            `🆔 رقم الهوية: \`${character.citizenId}\`\n\n` +
-            `🔴 لم يتم تسجيل الدخول تلقائياً.\n` +
-            `استخدم **Character Login** للدخول.`,
+            '❌ نموذج كركتر غير معروف.',
 
         flags:
             MessageFlags.Ephemeral
+
     });
 }
 
