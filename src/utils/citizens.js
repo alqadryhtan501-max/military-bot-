@@ -84,6 +84,15 @@ function saveCitizens(data) {
 // =====================================================
 // حساب Discord
 // =====================================================
+//
+// {
+//     "DISCORD_ID": {
+//         discordId,
+//         activeCharacterId,
+//         characters: []
+//     }
+// }
+// =====================================================
 
 function getUser(userId) {
 
@@ -306,7 +315,7 @@ function setActiveCharacter(
 
 
 // =====================================================
-// تسجيل الخروج
+// تسجيل الخروج من الكركتر
 // =====================================================
 
 function logoutCharacter(userId) {
@@ -322,8 +331,16 @@ function logoutCharacter(userId) {
     }
 
 
+    // =================================================
+    // إلغاء الكركتر الحالي
+    // =================================================
+
     user.activeCharacterId = null;
 
+
+    // =================================================
+    // إلغاء Active من جميع الكركترات
+    // =================================================
 
     if (Array.isArray(user.characters)) {
 
@@ -370,24 +387,21 @@ function generateCitizenId() {
 
 // =====================================================
 // إنشاء كركتر
+// =====================================================
 //
 // البيانات:
 //
 // userId
 // name
 // psId
-// dateOfBirth
+// birthDate
 // birthPlace
 // gender
 // =====================================================
 
 function createCharacter(
     userId,
-    name,
-    psId,
-    dateOfBirth,
-    birthPlace,
-    gender
+    characterData
 ) {
 
     const data = loadCitizens();
@@ -438,6 +452,25 @@ function createCharacter(
 
 
     // =================================================
+    // التأكد من البيانات
+    // =================================================
+
+    characterData =
+        characterData || {};
+
+
+    const {
+
+        name,
+        psId,
+        birthDate,
+        birthPlace,
+        gender
+
+    } = characterData;
+
+
+    // =================================================
     // توليد رقم الهوية
     // =================================================
 
@@ -462,12 +495,11 @@ function createCharacter(
         name:
             String(name || '').trim(),
 
-        // PS ID
         psId:
             String(psId || '').trim(),
 
-        dateOfBirth:
-            String(dateOfBirth || '').trim(),
+        birthDate:
+            String(birthDate || '').trim(),
 
         birthPlace:
             String(birthPlace || '').trim(),
@@ -612,11 +644,19 @@ function deleteCharacter(
         citizenId;
 
 
+    // =================================================
+    // حذف الكركتر
+    // =================================================
+
     user.characters.splice(
         index,
         1
     );
 
+
+    // =================================================
+    // إذا كان المحذوف هو الحالي
+    // =================================================
 
     if (wasActive) {
 
@@ -1053,6 +1093,16 @@ function getCitizenByUserId(userId) {
 // =====================================================
 // إنشاء Citizen قديم
 // =====================================================
+//
+// أبقيناه حتى لا تتعطل الأكواد القديمة.
+//
+// يستخدم الآن:
+//
+// psId
+// birthDate
+// birthPlace
+// gender
+// =====================================================
 
 function createCitizen({
     citizenId,
@@ -1060,8 +1110,7 @@ function createCitizen({
     name,
     age,
     psId,
-    psn,
-    dateOfBirth,
+    birthDate,
     birthPlace,
     gender
 }) {
@@ -1088,6 +1137,21 @@ function createCitizen({
             characters: []
 
         };
+
+    }
+
+
+    // =================================================
+    // التأكد من وجود characters
+    // =================================================
+
+    if (
+        !Array.isArray(
+            data[userId].characters
+        )
+    ) {
+
+        data[userId].characters = [];
 
     }
 
@@ -1120,6 +1184,7 @@ function createCitizen({
         name:
             String(name || '').trim(),
 
+        // توافق قديم
         age:
             age !== undefined &&
             age !== null
@@ -1127,17 +1192,12 @@ function createCitizen({
                 : null,
 
         // PS ID
-        // psId هو الأساسي
-        // psn موجود للتوافق مع الأكواد القديمة
         psId:
-            String(
-                psId ||
-                psn ||
-                ''
-            ).trim(),
+            String(psId || '').trim(),
 
-        dateOfBirth:
-            String(dateOfBirth || '').trim(),
+        // تاريخ الميلاد
+        birthDate:
+            String(birthDate || '').trim(),
 
         birthPlace:
             String(birthPlace || '').trim(),
@@ -1175,10 +1235,18 @@ function createCitizen({
     };
 
 
+    // =================================================
+    // إضافة
+    // =================================================
+
     data[userId]
         .characters
         .push(character);
 
+
+    // =================================================
+    // حفظ
+    // =================================================
 
     saveCitizens(data);
 
@@ -1192,13 +1260,32 @@ function createCitizen({
 
 module.exports = {
 
+    // ==========================
+    // إعدادات
+    // ==========================
+
     MAX_CHARACTERS,
+
+
+    // ==========================
+    // قاعدة البيانات
+    // ==========================
 
     loadCitizens,
     saveCitizens,
 
+
+    // ==========================
+    // المستخدمين
+    // ==========================
+
     getUser,
     createUser,
+
+
+    // ==========================
+    // الكركترات
+    // ==========================
 
     getCharacters,
     getCharacter,
@@ -1210,11 +1297,26 @@ module.exports = {
 
     canCreateCharacter,
 
+
+    // ==========================
+    // الكركتر الحالي
+    // ==========================
+
     getActiveCharacter,
     setActiveCharacter,
     logoutCharacter,
 
+
+    // ==========================
+    // الهوية
+    // ==========================
+
     generateCitizenId,
+
+
+    // ==========================
+    // الأموال
+    // ==========================
 
     addCash,
     removeCash,
@@ -1222,9 +1324,24 @@ module.exports = {
     removeBank,
     resetMoney,
 
+
+    // ==========================
+    // المخالفات
+    // ==========================
+
     addFine,
 
+
+    // ==========================
+    // المعاملات
+    // ==========================
+
     addTransaction,
+
+
+    // ==========================
+    // توافق قديم
+    // ==========================
 
     getCitizen,
     getCitizenByUserId,
