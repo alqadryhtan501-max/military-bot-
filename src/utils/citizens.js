@@ -12,36 +12,70 @@ const MAX_CHARACTERS = 3;
 // قاعدة البيانات
 // =====================================================
 
-const DATA_DIR = path.join(__dirname, '../../data');
-const DATA_FILE = path.join(DATA_DIR, 'citizens.json');
+const DATA_DIR =
+    path.join(__dirname, '../../data');
 
+const DATA_FILE =
+    path.join(DATA_DIR, 'citizens.json');
+
+
+// إنشاء مجلد البيانات
 if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+
+    fs.mkdirSync(
+        DATA_DIR,
+        {
+            recursive: true
+        }
+    );
+
 }
 
+
+// إنشاء قاعدة البيانات
 if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, '{}', 'utf8');
+
+    fs.writeFileSync(
+        DATA_FILE,
+        '{}',
+        'utf8'
+    );
+
 }
 
 
 // =====================================================
-// قراءة البيانات
+// قراءة قاعدة البيانات
 // =====================================================
 
 function loadCitizens() {
 
     try {
 
-        const data = fs.readFileSync(
-            DATA_FILE,
-            'utf8'
-        );
+        const data =
+            fs.readFileSync(
+                DATA_FILE,
+                'utf8'
+            );
 
         if (!data.trim()) {
             return {};
         }
 
-        return JSON.parse(data);
+        const parsed =
+            JSON.parse(data);
+
+        if (
+            !parsed ||
+            typeof parsed !== 'object' ||
+            Array.isArray(parsed)
+        ) {
+
+            return {};
+
+        }
+
+        return parsed;
 
     } catch (error) {
 
@@ -51,12 +85,14 @@ function loadCitizens() {
         );
 
         return {};
+
     }
+
 }
 
 
 // =====================================================
-// حفظ البيانات
+// حفظ قاعدة البيانات
 // =====================================================
 
 function saveCitizens(data) {
@@ -65,7 +101,11 @@ function saveCitizens(data) {
 
         fs.writeFileSync(
             DATA_FILE,
-            JSON.stringify(data, null, 4),
+            JSON.stringify(
+                data,
+                null,
+                4
+            ),
             'utf8'
         );
 
@@ -77,116 +117,177 @@ function saveCitizens(data) {
         );
 
         throw error;
+
     }
+
 }
 
 
 // =====================================================
-// حساب Discord
-// =====================================================
-//
-// {
-//     "DISCORD_ID": {
-//         discordId,
-//         activeCharacterId,
-//         characters: []
-//     }
-// }
+// المستخدم
 // =====================================================
 
 function getUser(userId) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    return data[String(userId)] || null;
+    return (
+        data[String(userId)] ||
+        null
+    );
+
 }
 
 
+// =====================================================
+// إنشاء حساب مستخدم
+// =====================================================
+
 function createUser(userId) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    userId = String(userId);
+    userId =
+        String(userId);
+
 
     if (!data[userId]) {
 
         data[userId] = {
 
-            discordId: userId,
+            discordId:
+                userId,
 
-            activeCharacterId: null,
+            activeCharacterId:
+                null,
 
-            characters: []
+            characters:
+                []
 
         };
 
         saveCitizens(data);
+
     }
 
+
     return data[userId];
+
 }
 
 
 // =====================================================
-// الحصول على شخصيات المستخدم
+// شخصيات المستخدم
 // =====================================================
 
 function getCharacters(userId) {
 
-    const user = getUser(userId);
+    const user =
+        getUser(userId);
 
     if (!user) {
         return [];
     }
 
-    if (!Array.isArray(user.characters)) {
+    if (
+        !Array.isArray(
+            user.characters
+        )
+    ) {
+
         return [];
+
     }
 
     return user.characters;
+
 }
 
 
 // =====================================================
-// التحقق من إمكانية إنشاء كركتر
+// هل يستطيع إنشاء شخصية؟
 // =====================================================
 
 function canCreateCharacter(userId) {
 
-    const characters =
-        getCharacters(userId);
+    return (
+        getCharacters(userId).length <
+        MAX_CHARACTERS
+    );
 
-    return characters.length < MAX_CHARACTERS;
 }
 
 
 // =====================================================
-// العثور على شخصية بالهوية
+// الحصول على شخصية معينة
+// =====================================================
+
+function getCharacter(
+    userId,
+    citizenId
+) {
+
+    const characters =
+        getCharacters(userId);
+
+    return (
+        characters.find(
+            character =>
+                String(
+                    character.citizenId
+                ) ===
+                String(citizenId)
+        ) ||
+        null
+    );
+
+}
+
+
+// =====================================================
+// البحث عن شخصية في جميع الحسابات
 // =====================================================
 
 function findCharacter(citizenId) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    citizenId = String(citizenId);
+    citizenId =
+        String(citizenId);
 
-    for (const userId of Object.keys(data)) {
 
-        const user = data[userId];
+    for (
+        const userId of Object.keys(data)
+    ) {
+
+        const user =
+            data[userId];
+
 
         if (
             !user ||
-            !Array.isArray(user.characters)
+            !Array.isArray(
+                user.characters
+            )
         ) {
+
             continue;
+
         }
+
 
         const character =
             user.characters.find(
                 item =>
-                    String(item.citizenId) ===
+                    String(
+                        item.citizenId
+                    ) ===
                     citizenId
             );
+
 
         if (character) {
 
@@ -199,30 +300,14 @@ function findCharacter(citizenId) {
                 userId
 
             };
+
         }
+
     }
 
+
     return null;
-}
 
-
-// =====================================================
-// الحصول على كركتر معين للمستخدم
-// =====================================================
-
-function getCharacter(
-    userId,
-    citizenId
-) {
-
-    const characters =
-        getCharacters(userId);
-
-    return characters.find(
-        character =>
-            String(character.citizenId) ===
-            String(citizenId)
-    ) || null;
 }
 
 
@@ -232,20 +317,28 @@ function getCharacter(
 
 function getActiveCharacter(userId) {
 
-    const user = getUser(userId);
+    const user =
+        getUser(userId);
 
     if (!user) {
         return null;
     }
 
-    if (!user.activeCharacterId) {
+
+    if (
+        !user.activeCharacterId
+    ) {
+
         return null;
+
     }
+
 
     return getCharacter(
         userId,
         user.activeCharacterId
     );
+
 }
 
 
@@ -258,130 +351,162 @@ function setActiveCharacter(
     citizenId
 ) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    userId = String(userId);
-    citizenId = String(citizenId);
+    userId =
+        String(userId);
 
-    const user = data[userId];
+    citizenId =
+        String(citizenId);
+
+
+    const user =
+        data[userId];
+
 
     if (!user) {
         return null;
     }
 
-    if (!Array.isArray(user.characters)) {
+
+    if (
+        !Array.isArray(
+            user.characters
+        )
+    ) {
+
         return null;
+
     }
+
 
     const character =
         user.characters.find(
             item =>
-                String(item.citizenId) ===
+                String(
+                    item.citizenId
+                ) ===
                 citizenId
         );
+
 
     if (!character) {
         return null;
     }
 
 
-    // =================================================
-    // إلغاء تسجيل الدخول من جميع الكركترات
-    // =================================================
-
+    // إلغاء تسجيل الدخول
+    // من جميع الشخصيات
     user.characters.forEach(
         item => {
 
             item.active =
-                String(item.citizenId) ===
+                String(
+                    item.citizenId
+                ) ===
                 citizenId;
 
         }
     );
 
 
-    // =================================================
-    // تسجيل الدخول بالكركتر المحدد
-    // =================================================
-
+    // تحديد الشخصية الحالية
     user.activeCharacterId =
         citizenId;
 
 
     saveCitizens(data);
 
+
     return character;
+
 }
 
 
 // =====================================================
-// تسجيل الخروج من الكركتر
+// تسجيل الخروج
 // =====================================================
 
 function logoutCharacter(userId) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    userId = String(userId);
+    userId =
+        String(userId);
 
-    const user = data[userId];
+
+    const user =
+        data[userId];
+
 
     if (!user) {
         return false;
     }
 
 
-    // =================================================
-    // إلغاء الكركتر الحالي
-    // =================================================
-
-    user.activeCharacterId = null;
+    // إلغاء الشخصية الحالية
+    user.activeCharacterId =
+        null;
 
 
-    // =================================================
-    // إلغاء Active من جميع الكركترات
-    // =================================================
-
-    if (Array.isArray(user.characters)) {
+    // إلغاء Active
+    if (
+        Array.isArray(
+            user.characters
+        )
+    ) {
 
         user.characters.forEach(
             character => {
 
-                character.active = false;
+                character.active =
+                    false;
 
             }
         );
+
     }
 
 
     saveCitizens(data);
 
+
     return true;
+
 }
 
 
 // =====================================================
-// توليد رقم هوية فريد من 5 أرقام
+// توليد رقم هوية 5 أرقام
 // =====================================================
 
 function generateCitizenId() {
 
     let citizenId;
 
+
     do {
 
-        citizenId = String(
-            Math.floor(
-                10000 +
-                Math.random() * 90000
-            )
-        );
+        citizenId =
+            String(
+                Math.floor(
+                    10000 +
+                    Math.random() *
+                    90000
+                )
+            );
 
     } while (
-        findCharacter(citizenId)
+        findCharacter(
+            citizenId
+        )
     );
 
+
     return citizenId;
+
 }
 
 
@@ -389,14 +514,17 @@ function generateCitizenId() {
 // إنشاء كركتر
 // =====================================================
 //
-// البيانات:
+// createCharacter(
+//     userId,
+//     {
+//         name,
+//         psId,
+//         birthDate,
+//         birthPlace,
+//         gender
+//     }
+// )
 //
-// userId
-// name
-// psId
-// birthDate
-// birthPlace
-// gender
 // =====================================================
 
 function createCharacter(
@@ -404,26 +532,32 @@ function createCharacter(
     characterData
 ) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    userId = String(userId);
+    userId =
+        String(userId);
 
 
     // =================================================
-    // إنشاء حساب المستخدم إذا غير موجود
+    // إنشاء المستخدم إذا غير موجود
     // =================================================
 
     if (!data[userId]) {
 
         data[userId] = {
 
-            discordId: userId,
+            discordId:
+                userId,
 
-            activeCharacterId: null,
+            activeCharacterId:
+                null,
 
-            characters: []
+            characters:
+                []
 
         };
+
     }
 
 
@@ -431,15 +565,20 @@ function createCharacter(
         data[userId];
 
 
-    if (!Array.isArray(user.characters)) {
+    if (
+        !Array.isArray(
+            user.characters
+        )
+    ) {
 
-        user.characters = [];
+        user.characters =
+            [];
 
     }
 
 
     // =================================================
-    // الحد الأقصى للكركترات
+    // الحد الأقصى
     // =================================================
 
     if (
@@ -448,30 +587,75 @@ function createCharacter(
     ) {
 
         return null;
+
     }
 
 
     // =================================================
-    // التأكد من البيانات
+    // البيانات
     // =================================================
 
     characterData =
         characterData || {};
 
 
-    const {
+    const name =
+        String(
+            characterData.name || ''
+        ).trim();
 
-        name,
-        psId,
-        birthDate,
-        birthPlace,
-        gender
 
-    } = characterData;
+    const psId =
+        String(
+            characterData.psId || ''
+        ).trim();
+
+
+    const birthDate =
+        String(
+            characterData.birthDate || ''
+        ).trim();
+
+
+    const birthPlace =
+        String(
+            characterData.birthPlace || ''
+        ).trim();
+
+
+    const gender =
+        String(
+            characterData.gender || ''
+        ).trim();
 
 
     // =================================================
-    // توليد رقم الهوية
+    // التحقق
+    // =================================================
+
+    if (!name) {
+        return null;
+    }
+
+    if (!psId) {
+        return null;
+    }
+
+    if (!birthDate) {
+        return null;
+    }
+
+    if (!birthPlace) {
+        return null;
+    }
+
+    if (!gender) {
+        return null;
+    }
+
+
+    // =================================================
+    // رقم الهوية
     // =================================================
 
     const citizenId =
@@ -479,7 +663,7 @@ function createCharacter(
 
 
     // =================================================
-    // إنشاء الكركتر
+    // الشخصية
     // =================================================
 
     const character = {
@@ -492,79 +676,86 @@ function createCharacter(
 
         userId,
 
-        name:
-            String(name || '').trim(),
+        name,
 
-        psId:
-            String(psId || '').trim(),
+        psId,
 
-        birthDate:
-            String(birthDate || '').trim(),
+        birthDate,
 
-        birthPlace:
-            String(birthPlace || '').trim(),
+        birthPlace,
 
-        gender:
-            String(gender || '').trim(),
+        gender,
 
 
         // ==========================
         // الحالة
         // ==========================
 
-        active: false,
+        active:
+            false,
 
 
         // ==========================
         // الأموال
         // ==========================
 
-        cash: 5000,
+        cash:
+            5000,
 
-        bank: 0,
+        bank:
+            0,
 
 
         // ==========================
         // الوظيفة
         // ==========================
 
-        job: null,
+        job:
+            null,
 
-        rank: null,
+        rank:
+            null,
 
-        salary: 0,
+        salary:
+            0,
 
-        points: 0,
+        points:
+            0,
 
 
         // ==========================
         // الخدمات
         // ==========================
 
-        servicesSuspended: false,
+        servicesSuspended:
+            false,
 
-        suspensionReason: null,
+        suspensionReason:
+            null,
 
 
         // ==========================
         // المخالفات
         // ==========================
 
-        fines: [],
+        fines:
+            [],
 
 
         // ==========================
         // السجل
         // ==========================
 
-        history: [],
+        history:
+            [],
 
 
         // ==========================
-        // العمليات المالية
+        // المعاملات المالية
         // ==========================
 
-        transactions: [],
+        transactions:
+            [],
 
 
         // ==========================
@@ -578,12 +769,21 @@ function createCharacter(
 
 
     // =================================================
-    // إضافة الكركتر
+    // إضافة الشخصية
     // =================================================
 
     user.characters.push(
         character
     );
+
+
+    // =================================================
+    // مهم:
+    // الشخصية الجديدة لا تسجل دخول تلقائياً
+    // =================================================
+
+    character.active =
+        false;
 
 
     // =================================================
@@ -594,11 +794,12 @@ function createCharacter(
 
 
     return character;
+
 }
 
 
 // =====================================================
-// حذف كركتر
+// حذف شخصية
 // =====================================================
 
 function deleteCharacter(
@@ -606,26 +807,42 @@ function deleteCharacter(
     citizenId
 ) {
 
-    const data = loadCitizens();
+    const data =
+        loadCitizens();
 
-    userId = String(userId);
-    citizenId = String(citizenId);
+    userId =
+        String(userId);
 
-    const user = data[userId];
+    citizenId =
+        String(citizenId);
+
+
+    const user =
+        data[userId];
+
 
     if (!user) {
         return null;
     }
 
-    if (!Array.isArray(user.characters)) {
+
+    if (
+        !Array.isArray(
+            user.characters
+        )
+    ) {
+
         return null;
+
     }
 
 
     const index =
         user.characters.findIndex(
             character =>
-                String(character.citizenId) ===
+                String(
+                    character.citizenId
+                ) ===
                 citizenId
         );
 
@@ -640,14 +857,13 @@ function deleteCharacter(
 
 
     const wasActive =
-        String(user.activeCharacterId) ===
+        String(
+            user.activeCharacterId
+        ) ===
         citizenId;
 
 
-    // =================================================
-    // حذف الكركتر
-    // =================================================
-
+    // حذف الشخصية
     user.characters.splice(
         index,
         1
@@ -655,31 +871,37 @@ function deleteCharacter(
 
 
     // =================================================
-    // إذا كان المحذوف هو الحالي
+    // إذا كانت الشخصية المحذوفة مسجل دخول فيها
     // =================================================
 
     if (wasActive) {
 
-        user.activeCharacterId = null;
+        user.activeCharacterId =
+            null;
+
 
         user.characters.forEach(
             character => {
 
-                character.active = false;
+                character.active =
+                    false;
 
             }
         );
+
     }
 
 
     saveCitizens(data);
 
+
     return deleted;
+
 }
 
 
 // =====================================================
-// تعديل كركتر
+// تعديل شخصية
 // =====================================================
 
 function updateCharacter(
@@ -690,8 +912,19 @@ function updateCharacter(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
+    }
+
+
+    if (
+        !updates ||
+        typeof updates !== 'object'
+    ) {
+
+        return result.character;
+
     }
 
 
@@ -705,6 +938,15 @@ function updateCharacter(
         loadCitizens();
 
 
+    if (
+        !data[result.userId]
+    ) {
+
+        return null;
+
+    }
+
+
     data[result.userId]
         .characters =
         data[result.userId]
@@ -714,7 +956,9 @@ function updateCharacter(
                         character.citizenId
                     ) ===
                     String(citizenId)
+
                         ? result.character
+
                         : character
             );
 
@@ -723,6 +967,7 @@ function updateCharacter(
 
 
     return result.character;
+
 }
 
 
@@ -738,21 +983,30 @@ function addCash(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
 
-    amount = Number(amount);
+
+    amount =
+        Number(amount);
+
 
     if (
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return null;
+
     }
 
 
-    result.character.cash +=
+    result.character.cash =
+        Number(
+            result.character.cash || 0
+        ) +
         amount;
 
 
@@ -766,6 +1020,7 @@ function addCash(
 
 
     return result.character;
+
 }
 
 
@@ -781,29 +1036,43 @@ function removeCash(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
 
-    amount = Number(amount);
+
+    amount =
+        Number(amount);
+
 
     if (
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return null;
+
     }
+
+
+    const currentCash =
+        Number(
+            result.character.cash || 0
+        );
 
 
     if (
-        result.character.cash <
-        amount
+        currentCash < amount
     ) {
+
         return false;
+
     }
 
 
-    result.character.cash -=
+    result.character.cash =
+        currentCash -
         amount;
 
 
@@ -817,6 +1086,7 @@ function removeCash(
 
 
     return result.character;
+
 }
 
 
@@ -832,21 +1102,30 @@ function addBank(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
 
-    amount = Number(amount);
+
+    amount =
+        Number(amount);
+
 
     if (
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return null;
+
     }
 
 
-    result.character.bank +=
+    result.character.bank =
+        Number(
+            result.character.bank || 0
+        ) +
         amount;
 
 
@@ -860,6 +1139,7 @@ function addBank(
 
 
     return result.character;
+
 }
 
 
@@ -875,29 +1155,43 @@ function removeBank(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
 
-    amount = Number(amount);
+
+    amount =
+        Number(amount);
+
 
     if (
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return null;
+
     }
+
+
+    const currentBank =
+        Number(
+            result.character.bank || 0
+        );
 
 
     if (
-        result.character.bank <
-        amount
+        currentBank < amount
     ) {
+
         return false;
+
     }
 
 
-    result.character.bank -=
+    result.character.bank =
+        currentBank -
         amount;
 
 
@@ -911,6 +1205,7 @@ function removeBank(
 
 
     return result.character;
+
 }
 
 
@@ -925,14 +1220,17 @@ function resetMoney(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
 
 
-    result.character.cash = 0;
+    result.character.cash =
+        0;
 
-    result.character.bank = 0;
+    result.character.bank =
+        0;
 
 
     updateCharacter(
@@ -945,6 +1243,7 @@ function resetMoney(
 
 
     return result.character;
+
 }
 
 
@@ -960,6 +1259,7 @@ function addFine(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
@@ -971,7 +1271,8 @@ function addFine(
         )
     ) {
 
-        result.character.fines = [];
+        result.character.fines =
+            [];
 
     }
 
@@ -981,7 +1282,9 @@ function addFine(
         id:
             Date.now().toString(),
 
-        ...fine,
+        ...(
+            fine || {}
+        ),
 
         createdAt:
             new Date().toISOString()
@@ -1004,6 +1307,71 @@ function addFine(
 
 
     return newFine;
+
+}
+
+
+// =====================================================
+// إضافة سجل
+// =====================================================
+
+function addHistory(
+    citizenId,
+    entry
+) {
+
+    const result =
+        findCharacter(citizenId);
+
+
+    if (!result) {
+        return null;
+    }
+
+
+    if (
+        !Array.isArray(
+            result.character.history
+        )
+    ) {
+
+        result.character.history =
+            [];
+
+    }
+
+
+    const newEntry = {
+
+        id:
+            Date.now().toString(),
+
+        ...(
+            entry || {}
+        ),
+
+        createdAt:
+            new Date().toISOString()
+
+    };
+
+
+    result.character.history.push(
+        newEntry
+    );
+
+
+    updateCharacter(
+        citizenId,
+        {
+            history:
+                result.character.history
+        }
+    );
+
+
+    return newEntry;
+
 }
 
 
@@ -1019,6 +1387,7 @@ function addTransaction(
     const result =
         findCharacter(citizenId);
 
+
     if (!result) {
         return null;
     }
@@ -1030,7 +1399,8 @@ function addTransaction(
         )
     ) {
 
-        result.character.transactions = [];
+        result.character.transactions =
+            [];
 
     }
 
@@ -1040,7 +1410,9 @@ function addTransaction(
         id:
             Date.now().toString(),
 
-        ...transaction,
+        ...(
+            transaction || {}
+        ),
 
         date:
             new Date().toISOString()
@@ -1063,45 +1435,44 @@ function addTransaction(
 
 
     return newTransaction;
+
 }
 
 
 // =====================================================
-// توافق مع النظام القديم
+// توافق مع الأنظمة القديمة
 // =====================================================
 
-function getCitizen(citizenId) {
+function getCitizen(
+    citizenId
+) {
 
     const result =
-        findCharacter(citizenId);
+        findCharacter(
+            citizenId
+        );
+
 
     return result
         ? result.character
         : null;
+
 }
 
 
-function getCitizenByUserId(userId) {
+function getCitizenByUserId(
+    userId
+) {
 
-    const character =
-        getActiveCharacter(userId);
+    return getActiveCharacter(
+        userId
+    );
 
-    return character || null;
 }
 
 
 // =====================================================
 // إنشاء Citizen قديم
-// =====================================================
-//
-// أبقيناه حتى لا تتعطل الأكواد القديمة.
-//
-// يستخدم الآن:
-//
-// psId
-// birthDate
-// birthPlace
-// gender
 // =====================================================
 
 function createCitizen({
@@ -1118,116 +1489,130 @@ function createCitizen({
     const data =
         loadCitizens();
 
-    userId = String(userId);
+    userId =
+        String(userId);
 
-
-    // =================================================
-    // إنشاء حساب المستخدم
-    // =================================================
 
     if (!data[userId]) {
 
         data[userId] = {
 
-            discordId: userId,
+            discordId:
+                userId,
 
             activeCharacterId:
                 null,
 
-            characters: []
+            characters:
+                []
 
         };
 
     }
 
 
-    // =================================================
-    // التأكد من وجود characters
-    // =================================================
+    const user =
+        data[userId];
+
 
     if (
         !Array.isArray(
-            data[userId].characters
+            user.characters
         )
     ) {
 
-        data[userId].characters = [];
+        user.characters =
+            [];
 
     }
 
 
-    // =================================================
-    // الحد الأقصى
-    // =================================================
-
     if (
-        data[userId]
-            .characters
-            .length >= MAX_CHARACTERS
+        user.characters.length >=
+        MAX_CHARACTERS
     ) {
 
         return null;
+
     }
 
-
-    // =================================================
-    // إنشاء الشخصية
-    // =================================================
 
     const character = {
 
         citizenId:
-            String(citizenId),
+            String(
+                citizenId ||
+                generateCitizenId()
+            ),
 
         userId,
 
         name:
-            String(name || '').trim(),
+            String(
+                name || ''
+            ).trim(),
 
-        // توافق قديم
         age:
             age !== undefined &&
             age !== null
                 ? Number(age)
                 : null,
 
-        // PS ID
         psId:
-            String(psId || '').trim(),
+            String(
+                psId || ''
+            ).trim(),
 
-        // تاريخ الميلاد
         birthDate:
-            String(birthDate || '').trim(),
+            String(
+                birthDate || ''
+            ).trim(),
 
         birthPlace:
-            String(birthPlace || '').trim(),
+            String(
+                birthPlace || ''
+            ).trim(),
 
         gender:
-            String(gender || '').trim(),
+            String(
+                gender || ''
+            ).trim(),
 
-        active: false,
+        active:
+            false,
 
-        cash: 5000,
+        cash:
+            5000,
 
-        bank: 0,
+        bank:
+            0,
 
-        job: null,
+        job:
+            null,
 
-        rank: null,
+        rank:
+            null,
 
-        salary: 0,
+        salary:
+            0,
 
-        points: 0,
+        points:
+            0,
 
-        servicesSuspended: false,
+        servicesSuspended:
+            false,
 
-        suspensionReason: null,
+        suspensionReason:
+            null,
 
-        fines: [],
+        fines:
+            [],
 
-        history: [],
+        history:
+            [],
 
-        transactions: [],
+        transactions:
+            [],
 
         createdAt:
             new Date().toISOString()
@@ -1235,22 +1620,16 @@ function createCitizen({
     };
 
 
-    // =================================================
-    // إضافة
-    // =================================================
+    user.characters.push(
+        character
+    );
 
-    data[userId]
-        .characters
-        .push(character);
-
-
-    // =================================================
-    // حفظ
-    // =================================================
 
     saveCitizens(data);
 
+
     return character;
+
 }
 
 
@@ -1260,89 +1639,52 @@ function createCitizen({
 
 module.exports = {
 
-    // ==========================
-    // إعدادات
-    // ==========================
-
+    // الإعدادات
     MAX_CHARACTERS,
 
-
-    // ==========================
     // قاعدة البيانات
-    // ==========================
-
     loadCitizens,
     saveCitizens,
 
-
-    // ==========================
-    // المستخدمين
-    // ==========================
-
+    // المستخدم
     getUser,
     createUser,
 
-
-    // ==========================
-    // الكركترات
-    // ==========================
-
+    // الشخصيات
     getCharacters,
     getCharacter,
     findCharacter,
+    canCreateCharacter,
 
     createCharacter,
     deleteCharacter,
     updateCharacter,
 
-    canCreateCharacter,
-
-
-    // ==========================
-    // الكركتر الحالي
-    // ==========================
-
+    // Login / Logout
     getActiveCharacter,
     setActiveCharacter,
     logoutCharacter,
 
-
-    // ==========================
     // الهوية
-    // ==========================
-
     generateCitizenId,
 
-
-    // ==========================
     // الأموال
-    // ==========================
-
     addCash,
     removeCash,
     addBank,
     removeBank,
     resetMoney,
 
-
-    // ==========================
     // المخالفات
-    // ==========================
-
     addFine,
 
+    // السجل
+    addHistory,
 
-    // ==========================
     // المعاملات
-    // ==========================
-
     addTransaction,
 
-
-    // ==========================
-    // توافق قديم
-    // ==========================
-
+    // توافق الأنظمة القديمة
     getCitizen,
     getCitizenByUserId,
     createCitizen
