@@ -48,7 +48,7 @@ async function showCharactersMenu(interaction) {
     } else {
 
         description +=
-            `🎭 عدد الكركترات: **${characters.length}**\n\n`;
+            `🎭 عدد الكركترات: **${characters.length}/3**\n\n`;
 
         if (activeCharacter) {
 
@@ -62,7 +62,6 @@ async function showCharactersMenu(interaction) {
 
             description +=
                 '🔴 لا يوجد كركتر مسجل دخول حالياً.';
-
         }
     }
 
@@ -94,7 +93,7 @@ async function showCharactersMenu(interaction) {
                 new StringSelectMenuOptionBuilder()
                     .setLabel('Create Character')
                     .setDescription(
-                        'لإنشاء كركتر جديد'
+                        'إنشاء كركتر جديد'
                     )
                     .setValue('character_create')
                     .setEmoji('➕'),
@@ -102,7 +101,7 @@ async function showCharactersMenu(interaction) {
                 new StringSelectMenuOptionBuilder()
                     .setLabel('Character Login')
                     .setDescription(
-                        'لتسجيل الدخول في الكركتر'
+                        'تسجيل الدخول واختيار الكركتر'
                     )
                     .setValue('character_login')
                     .setEmoji('🔐'),
@@ -110,27 +109,10 @@ async function showCharactersMenu(interaction) {
                 new StringSelectMenuOptionBuilder()
                     .setLabel('Character Logout')
                     .setDescription(
-                        'لتسجيل الخروج من الكركتر الحالي'
+                        'تسجيل الخروج من الكركتر الحالي'
                     )
                     .setValue('character_logout')
-                    .setEmoji('🚪'),
-
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Show Identity')
-                    .setDescription(
-                        'لعرض بيانات الكركتر الحالي'
-                    )
-                    .setValue('character_identity')
-                    .setEmoji('🪪'),
-
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Delete Character')
-                    .setDescription(
-                        'لحذف كركتر'
-                    )
-                    .setValue('character_delete')
-                    .setEmoji('🗑️')
-
+                    .setEmoji('🚪')
             );
 
 
@@ -154,7 +136,7 @@ async function showCharactersMenu(interaction) {
 
 
 // =====================================================
-// التعامل مع قائمة الكركترات
+// التعامل مع القائمة الرئيسية
 // =====================================================
 
 async function handleCharacterButtons(interaction) {
@@ -174,6 +156,27 @@ async function handleCharacterButtons(interaction) {
 
     if (value === 'character_create') {
 
+        const characters =
+            citizens.getCharacters(userId);
+
+
+        // الحد الأقصى 3 كركترات
+
+        if (characters.length >= 3) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ وصلت للحد الأقصى.\n\n' +
+                    'يمكنك امتلاك **3 كركترات فقط**.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
         const modal =
             new ModalBuilder()
                 .setCustomId(
@@ -184,13 +187,15 @@ async function handleCharacterButtons(interaction) {
                 );
 
 
+        // الاسم
+
         const nameInput =
             new TextInputBuilder()
                 .setCustomId(
                     'character_name'
                 )
                 .setLabel(
-                    'اسم الكركتر'
+                    'الاسم'
                 )
                 .setPlaceholder(
                     'مثال: محمد أحمد'
@@ -203,24 +208,93 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(50);
 
 
-        const ageInput =
+        // حساب السوني
+
+        const psnInput =
             new TextInputBuilder()
                 .setCustomId(
-                    'character_age'
+                    'character_psn'
                 )
                 .setLabel(
-                    'العمر'
+                    'اسم حساب السوني'
                 )
                 .setPlaceholder(
-                    'مثال: 25'
+                    'مثال: Taha_123'
                 )
                 .setStyle(
                     TextInputStyle.Short
                 )
                 .setRequired(true)
-                .setMinLength(1)
-                .setMaxLength(3);
+                .setMinLength(2)
+                .setMaxLength(30);
 
+
+        // تاريخ الميلاد
+
+        const birthDateInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_birthdate'
+                )
+                .setLabel(
+                    'تاريخ الميلاد'
+                )
+                .setPlaceholder(
+                    'مثال: 2005-08-21'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(8)
+                .setMaxLength(10);
+
+
+        // مكان الميلاد
+
+        const birthPlaceInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_birthplace'
+                )
+                .setLabel(
+                    'مكان الميلاد'
+                )
+                .setPlaceholder(
+                    'مثال: جدة'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(2)
+                .setMaxLength(50);
+
+
+        // الجنس
+
+        const genderInput =
+            new TextInputBuilder()
+                .setCustomId(
+                    'character_gender'
+                )
+                .setLabel(
+                    'الجنس'
+                )
+                .setPlaceholder(
+                    'ذكر / أنثى'
+                )
+                .setStyle(
+                    TextInputStyle.Short
+                )
+                .setRequired(true)
+                .setMinLength(2)
+                .setMaxLength(10);
+
+
+        /*
+         * Discord Modal يسمح بحد أقصى 5 Components.
+         */
 
         modal.addComponents(
 
@@ -228,7 +302,16 @@ async function handleCharacterButtons(interaction) {
                 .addComponents(nameInput),
 
             new ActionRowBuilder()
-                .addComponents(ageInput)
+                .addComponents(psnInput),
+
+            new ActionRowBuilder()
+                .addComponents(birthDateInput),
+
+            new ActionRowBuilder()
+                .addComponents(birthPlaceInput),
+
+            new ActionRowBuilder()
+                .addComponents(genderInput)
 
         );
 
@@ -262,30 +345,34 @@ async function handleCharacterButtons(interaction) {
         }
 
 
+        // عرض جميع الكركترات
+
         const options =
-            characters.map(character => {
+            characters.slice(0, 3).map(
+                character => {
 
-                return new StringSelectMenuOptionBuilder()
+                    return new StringSelectMenuOptionBuilder()
 
-                    .setLabel(
-                        character.name
-                    )
+                        .setLabel(
+                            character.name
+                        )
 
-                    .setDescription(
-                        `رقم الكركتر: ${character.citizenId} | العمر: ${character.age}`
-                    )
+                        .setDescription(
+                            `رقم الهوية: ${character.citizenId}`
+                        )
 
-                    .setValue(
-                        String(character.citizenId)
-                    )
+                        .setValue(
+                            String(character.citizenId)
+                        )
 
-                    .setEmoji(
-                        character.active
-                            ? '🟢'
-                            : '👤'
-                    );
+                        .setEmoji(
+                            character.active
+                                ? '🟢'
+                                : '👤'
+                        );
 
-            });
+                }
+            );
 
 
         const menu =
@@ -344,232 +431,36 @@ async function handleCharacterButtons(interaction) {
         }
 
 
-        /*
-         * citizens.js لا يحتوي logoutCharacter.
-         *
-         * لذلك لا نحاول استدعاء دالة غير موجودة.
-         *
-         * حالياً setActiveCharacter() مخصص
-         * لاختيار شخصية، وليس لتسجيل الخروج.
-         *
-         * سيتم إضافة نظام Logout بشكل صحيح
-         * إلى citizens.js لاحقاً إذا احتجناه.
-         */
+        const loggedOut =
+            citizens.logoutCharacter(userId);
+
+
+        if (!loggedOut) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تعذر تسجيل الخروج.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
 
         return interaction.reply({
 
             content:
-                `ℹ️ الكركتر الحالي هو **${activeCharacter.name}**.\n\n` +
+                `🚪 **تم تسجيل الخروج بنجاح.**\n\n` +
+                `👤 الكركتر: **${activeCharacter.name}**\n` +
                 `🆔 رقم الهوية: \`${activeCharacter.citizenId}\`\n\n` +
-                `نظام تسجيل الخروج يحتاج دالة Logout مستقلة في قاعدة البيانات.`,
+                `🔴 أنت الآن غير مسجل دخول بأي كركتر.`,
 
             flags:
                 MessageFlags.Ephemeral
 
         });
-    }
-
-
-    // =================================================
-    // عرض الهوية
-    // =================================================
-
-    if (value === 'character_identity') {
-
-        const activeCharacter =
-            citizens.getActiveCharacter(userId);
-
-
-        if (!activeCharacter) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ لا يوجد كركتر مسجل دخول حالياً.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
-        }
-
-
-        // الوظيفة في citizens.js عبارة عن Object
-        const jobName =
-            activeCharacter.job &&
-            activeCharacter.job.name
-                ? activeCharacter.job.name
-                : 'لا يوجد';
-
-
-        const jobRank =
-            activeCharacter.job &&
-            activeCharacter.job.rank
-                ? activeCharacter.job.rank
-                : 'لا يوجد';
-
-
-        const embed =
-            new EmbedBuilder()
-
-                .setTitle(
-                    '🪪 هوية الكركتر'
-                )
-
-                .setDescription(
-                    `### ${activeCharacter.name}`
-                )
-
-                .addFields(
-
-                    {
-                        name: '🆔 رقم الكركتر',
-                        value:
-                            `\`${activeCharacter.citizenId}\``,
-                        inline: true
-                    },
-
-                    {
-                        name: '🎂 العمر',
-                        value:
-                            String(activeCharacter.age),
-                        inline: true
-                    },
-
-                    {
-                        name: '💵 الكاش',
-                        value:
-                            `${Number(
-                                activeCharacter.cash || 0
-                            ).toLocaleString()} ريال`,
-                        inline: true
-                    },
-
-                    {
-                        name: '🏦 البنك',
-                        value:
-                            `${Number(
-                                activeCharacter.bank || 0
-                            ).toLocaleString()} ريال`,
-                        inline: true
-                    },
-
-                    {
-                        name: '💼 الوظيفة',
-                        value:
-                            jobName,
-                        inline: true
-                    },
-
-                    {
-                        name: '⭐ الرتبة',
-                        value:
-                            jobRank,
-                        inline: true
-                    },
-
-                    {
-                        name: '⛔ حالة الخدمات',
-                        value:
-                            activeCharacter.servicesSuspended
-                                ? 'موقوفة'
-                                : 'مفعلة',
-                        inline: true
-                    },
-
-                    {
-                        name: '🧾 المخالفات',
-                        value:
-                            String(
-                                Array.isArray(
-                                    activeCharacter.fines
-                                )
-                                    ? activeCharacter.fines.length
-                                    : 0
-                            ),
-                        inline: true
-                    }
-
-                )
-
-                .setColor('#2b2d31')
-                .setTimestamp();
-
-
-        return interaction.reply({
-
-            embeds:
-                [embed],
-
-            flags:
-                MessageFlags.Ephemeral
-
-        });
-    }
-
-
-    // =================================================
-    // حذف كركتر
-    // =================================================
-
-    if (value === 'character_delete') {
-
-        const characters =
-            citizens.getCharacters(userId);
-
-
-        if (characters.length === 0) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ ما عندك أي كركتر لحذفه.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
-        }
-
-
-        const modal =
-            new ModalBuilder()
-                .setCustomId(
-                    'character_delete_modal'
-                )
-                .setTitle(
-                    '🗑️ حذف كركتر'
-                );
-
-
-        const idInput =
-            new TextInputBuilder()
-                .setCustomId(
-                    'character_id'
-                )
-                .setLabel(
-                    'رقم الكركتر'
-                )
-                .setPlaceholder(
-                    'اكتب رقم الكركتر'
-                )
-                .setStyle(
-                    TextInputStyle.Short
-                )
-                .setRequired(true)
-                .setMinLength(5)
-                .setMaxLength(5);
-
-
-        modal.addComponents(
-
-            new ActionRowBuilder()
-                .addComponents(idInput)
-
-        );
-
-
-        return interaction.showModal(modal);
     }
 
 
@@ -658,8 +549,9 @@ async function handleCharacterLogin(
         content:
             `🔐 **تم تسجيل الدخول بنجاح!**\n\n` +
             `👤 الكركتر: **${selected.name}**\n` +
-            `🆔 الرقم: \`${selected.citizenId}\`\n` +
-            `🎂 العمر: **${selected.age}**\n\n` +
+            `🆔 رقم الهوية: \`${selected.citizenId}\`\n` +
+            `🎂 تاريخ الميلاد: **${selected.birthDate || 'غير محدد'}**\n` +
+            `📍 مكان الميلاد: **${selected.birthPlace || 'غير محدد'}**\n\n` +
             `💵 الكاش: **${Number(
                 selected.cash || 0
             ).toLocaleString()} ريال**\n` +
@@ -706,28 +598,48 @@ async function handleCharacterModals(
                 .trim();
 
 
-        const ageText =
+        const psn =
             interaction.fields
                 .getTextInputValue(
-                    'character_age'
+                    'character_psn'
                 )
                 .trim();
 
 
-        const age =
-            Number(ageText);
+        const birthDate =
+            interaction.fields
+                .getTextInputValue(
+                    'character_birthdate'
+                )
+                .trim();
 
 
-        // التحقق من الاسم
+        const birthPlace =
+            interaction.fields
+                .getTextInputValue(
+                    'character_birthplace'
+                )
+                .trim();
 
-        if (
-            name.length < 2
-        ) {
+
+        const gender =
+            interaction.fields
+                .getTextInputValue(
+                    'character_gender'
+                )
+                .trim();
+
+
+        // =================================================
+        // التحقق من البيانات
+        // =================================================
+
+        if (name.length < 2) {
 
             return interaction.reply({
 
                 content:
-                    '❌ اسم الكركتر قصير جداً.',
+                    '❌ الاسم قصير جداً.',
 
                 flags:
                     MessageFlags.Ephemeral
@@ -736,18 +648,12 @@ async function handleCharacterModals(
         }
 
 
-        // التحقق من العمر
-
-        if (
-            !Number.isInteger(age) ||
-            age < 1 ||
-            age > 120
-        ) {
+        if (psn.length < 2) {
 
             return interaction.reply({
 
                 content:
-                    '❌ العمر غير صحيح.',
+                    '❌ اسم حساب السوني غير صحيح.',
 
                 flags:
                     MessageFlags.Ephemeral
@@ -756,7 +662,115 @@ async function handleCharacterModals(
         }
 
 
+        // التحقق من التاريخ
+
+        const dateRegex =
+            /^\d{4}-\d{2}-\d{2}$/;
+
+
+        if (
+            !dateRegex.test(birthDate)
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد غير صحيح.\n' +
+                    'استخدم الصيغة: **YYYY-MM-DD**',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        const parsedDate =
+            new Date(birthDate);
+
+
+        if (
+            Number.isNaN(
+                parsedDate.getTime()
+            )
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد غير صحيح.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        if (birthPlace.length < 2) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ مكان الميلاد غير صحيح.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        const normalizedGender =
+            gender.toLowerCase();
+
+
+        if (
+            normalizedGender !== 'ذكر' &&
+            normalizedGender !== 'انثى' &&
+            normalizedGender !== 'أنثى' &&
+            normalizedGender !== 'male' &&
+            normalizedGender !== 'female'
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ الجنس غير صحيح.\n' +
+                    'اكتب: **ذكر** أو **أنثى**',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // التأكد من عدم تجاوز 3 كركترات
+        // =================================================
+
+        const characters =
+            citizens.getCharacters(userId);
+
+
+        if (characters.length >= 3) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ لا يمكنك امتلاك أكثر من **3 كركترات**.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
         // إنشاء الكركتر
+        // =================================================
 
         let character;
 
@@ -765,8 +779,13 @@ async function handleCharacterModals(
             character =
                 citizens.createCharacter(
                     userId,
-                    name,
-                    age
+                    {
+                        name,
+                        psn,
+                        birthDate,
+                        birthPlace,
+                        gender
+                    }
                 );
 
         } catch (error) {
@@ -808,116 +827,13 @@ async function handleCharacterModals(
             content:
                 `✅ **تم إنشاء الكركتر بنجاح!**\n\n` +
                 `👤 الاسم: **${character.name}**\n` +
-                `🎂 العمر: **${character.age}**\n` +
-                `🆔 رقم الكركتر: \`${character.citizenId}\`\n\n` +
-                `💵 الكاش: **${Number(
-                    character.cash || 0
-                ).toLocaleString()} ريال**\n` +
-                `🏦 البنك: **${Number(
-                    character.bank || 0
-                ).toLocaleString()} ريال**`,
-
-            flags:
-                MessageFlags.Ephemeral
-
-        });
-    }
-
-
-    // =================================================
-    // حذف كركتر
-    // =================================================
-
-    if (
-        customId ===
-        'character_delete_modal'
-    ) {
-
-        const citizenId =
-            interaction.fields
-                .getTextInputValue(
-                    'character_id'
-                )
-                .trim();
-
-
-        const characters =
-            citizens.getCharacters(userId);
-
-
-        const character =
-            characters.find(
-
-                item =>
-                    String(item.citizenId) ===
-                    String(citizenId)
-
-            );
-
-
-        if (!character) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ هذا الكركتر غير موجود في حسابك.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
-        }
-
-
-        const deleted =
-            citizens.deleteCharacter(
-                userId,
-                citizenId
-            );
-
-
-        if (!deleted) {
-
-            return interaction.reply({
-
-                content:
-                    '❌ تعذر حذف الكركتر.',
-
-                flags:
-                    MessageFlags.Ephemeral
-
-            });
-        }
-
-
-        const newActive =
-            citizens.getActiveCharacter(userId);
-
-
-        let message =
-            `🗑️ **تم حذف الكركتر بنجاح.**\n\n` +
-            `👤 المحذوف: **${deleted.name}**\n` +
-            `🆔 الرقم: \`${deleted.citizenId}\``;
-
-
-        if (newActive) {
-
-            message +=
-                `\n\n🟢 الكركتر الحالي: **${newActive.name}**\n` +
-                `🆔 الرقم: \`${newActive.citizenId}\``;
-
-        } else {
-
-            message +=
-                '\n\n🔴 لا يوجد كركتر مسجل دخول حالياً.';
-
-        }
-
-
-        return interaction.reply({
-
-            content:
-                message,
+                `🎮 حساب السوني: **${character.psn}**\n` +
+                `🎂 تاريخ الميلاد: **${character.birthDate}**\n` +
+                `📍 مكان الميلاد: **${character.birthPlace}**\n` +
+                `⚧️ الجنس: **${character.gender}**\n` +
+                `🆔 رقم الهوية: \`${character.citizenId}\`\n\n` +
+                `🔴 لم يتم تسجيل الدخول تلقائياً.\n` +
+                `استخدم **Character Login** للدخول.`,
 
             flags:
                 MessageFlags.Ephemeral
