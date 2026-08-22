@@ -230,7 +230,7 @@ function getActiveCharacter(userId) {
 
 
 // =====================================================
-// اختيار الكركتر الحالي
+// اختيار الكركتر الحالي / تسجيل الدخول
 // =====================================================
 
 function setActiveCharacter(
@@ -287,6 +287,48 @@ function setActiveCharacter(
     saveCitizens(data);
 
     return character;
+}
+
+
+// =====================================================
+// تسجيل الخروج من الكركتر
+// =====================================================
+
+function logoutCharacter(userId) {
+
+    const data = loadCitizens();
+
+    userId = String(userId);
+
+    const user = data[userId];
+
+    if (!user) {
+        return false;
+    }
+
+
+    // إلغاء الكركتر الحالي
+
+    user.activeCharacterId = null;
+
+
+    // إلغاء الحالة active من جميع الكركترات
+
+    if (Array.isArray(user.characters)) {
+
+        user.characters.forEach(
+            character => {
+
+                character.active = false;
+
+            }
+        );
+    }
+
+
+    saveCitizens(data);
+
+    return true;
 }
 
 
@@ -383,6 +425,7 @@ function createCharacter(
         // الحالة
         // ==========================
 
+        // إنشاء الشخصية لا يعني تسجيل الدخول
         active: false,
 
 
@@ -446,23 +489,6 @@ function createCharacter(
             new Date().toISOString()
 
     };
-
-
-    // =================================================
-    // إذا كان أول كركتر
-    // يصبح الحالي تلقائياً
-    // =================================================
-
-    if (
-        user.characters.length === 0
-    ) {
-
-        character.active = true;
-
-        user.activeCharacterId =
-            citizenId;
-
-    }
 
 
     // إضافة الكركتر
@@ -538,40 +564,21 @@ function deleteCharacter(
 
     // =================================================
     // إذا كان المحذوف هو الحالي
+    // يتم تسجيل الخروج فقط
+    // ولا يتم الدخول بكركتر آخر
     // =================================================
 
     if (wasActive) {
 
-        if (user.characters.length > 0) {
+        user.activeCharacterId = null;
 
-            const newActive =
-                user.characters[0];
+        user.characters.forEach(
+            character => {
 
-            user.characters.forEach(
-                character => {
+                character.active = false;
 
-                    character.active =
-                        String(
-                            character.citizenId
-                        ) ===
-                        String(
-                            newActive.citizenId
-                        );
-
-                }
-            );
-
-            user.activeCharacterId =
-                String(
-                    newActive.citizenId
-                );
-
-        } else {
-
-            user.activeCharacterId =
-                null;
-
-        }
+            }
+        );
     }
 
 
@@ -1068,18 +1075,8 @@ function createCitizen({
         .push(character);
 
 
-    if (
-        data[userId]
-            .activeCharacterId === null
-    ) {
-
-        character.active = true;
-
-        data[userId]
-            .activeCharacterId =
-            character.citizenId;
-
-    }
+    // إنشاء Citizen لا يعني تسجيل الدخول
+    // تسجيل الدخول يتم فقط عن طريق setActiveCharacter()
 
 
     saveCitizens(data);
@@ -1114,6 +1111,7 @@ module.exports = {
     // الكركتر الحالي
     getActiveCharacter,
     setActiveCharacter,
+    logoutCharacter,
 
     // الهوية
     generateCitizenId,
