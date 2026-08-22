@@ -18,7 +18,8 @@ const citizens = require('../../utils/citizens');
 
 async function showCharactersMenu(interaction) {
 
-    const userId = interaction.user.id;
+    const userId =
+        interaction.user.id;
 
     // إنشاء حساب المستخدم إذا غير موجود
     citizens.createUser(userId);
@@ -187,7 +188,9 @@ async function handleCharacterButtons(interaction) {
                 );
 
 
+        // =================================================
         // الاسم
+        // =================================================
 
         const nameInput =
             new TextInputBuilder()
@@ -208,15 +211,17 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(50);
 
 
-        // حساب السوني
+        // =================================================
+        // PS ID
+        // =================================================
 
-        const psnInput =
+        const psIdInput =
             new TextInputBuilder()
                 .setCustomId(
-                    'character_psn'
+                    'character_psid'
                 )
                 .setLabel(
-                    'اسم حساب السوني'
+                    'PS ID'
                 )
                 .setPlaceholder(
                     'مثال: Taha_123'
@@ -229,7 +234,9 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(30);
 
 
+        // =================================================
         // تاريخ الميلاد
+        // =================================================
 
         const birthDateInput =
             new TextInputBuilder()
@@ -250,7 +257,9 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(10);
 
 
+        // =================================================
         // مكان الميلاد
+        // =================================================
 
         const birthPlaceInput =
             new TextInputBuilder()
@@ -271,7 +280,9 @@ async function handleCharacterButtons(interaction) {
                 .setMaxLength(50);
 
 
+        // =================================================
         // الجنس
+        // =================================================
 
         const genderInput =
             new TextInputBuilder()
@@ -293,7 +304,7 @@ async function handleCharacterButtons(interaction) {
 
 
         /*
-         * Discord Modal يسمح بحد أقصى 5 Components.
+         * Modal يحتوي على 5 حقول
          */
 
         modal.addComponents(
@@ -302,7 +313,7 @@ async function handleCharacterButtons(interaction) {
                 .addComponents(nameInput),
 
             new ActionRowBuilder()
-                .addComponents(psnInput),
+                .addComponents(psIdInput),
 
             new ActionRowBuilder()
                 .addComponents(birthDateInput),
@@ -345,34 +356,38 @@ async function handleCharacterButtons(interaction) {
         }
 
 
+        // =================================================
         // عرض جميع الكركترات
+        // =================================================
 
         const options =
-            characters.slice(0, 3).map(
-                character => {
+            characters
+                .slice(0, 3)
+                .map(
+                    character => {
 
-                    return new StringSelectMenuOptionBuilder()
+                        return new StringSelectMenuOptionBuilder()
 
-                        .setLabel(
-                            character.name
-                        )
+                            .setLabel(
+                                character.name
+                            )
 
-                        .setDescription(
-                            `رقم الهوية: ${character.citizenId}`
-                        )
+                            .setDescription(
+                                `رقم الهوية: ${character.citizenId}`
+                            )
 
-                        .setValue(
-                            String(character.citizenId)
-                        )
+                            .setValue(
+                                String(character.citizenId)
+                            )
 
-                        .setEmoji(
-                            character.active
-                                ? '🟢'
-                                : '👤'
-                        );
+                            .setEmoji(
+                                character.active
+                                    ? '🟢'
+                                    : '👤'
+                            );
 
-                }
-            );
+                    }
+                );
 
 
         const menu =
@@ -550,8 +565,10 @@ async function handleCharacterLogin(
             `🔐 **تم تسجيل الدخول بنجاح!**\n\n` +
             `👤 الكركتر: **${selected.name}**\n` +
             `🆔 رقم الهوية: \`${selected.citizenId}\`\n` +
-            `🎂 تاريخ الميلاد: **${selected.birthDate || 'غير محدد'}**\n` +
-            `📍 مكان الميلاد: **${selected.birthPlace || 'غير محدد'}**\n\n` +
+            `🎮 PS ID: **${selected.psId || 'غير محدد'}**\n` +
+            `🎂 تاريخ الميلاد: **${selected.dateOfBirth || 'غير محدد'}**\n` +
+            `📍 مكان الميلاد: **${selected.birthPlace || 'غير محدد'}**\n` +
+            `⚧️ الجنس: **${selected.gender || 'غير محدد'}**\n\n` +
             `💵 الكاش: **${Number(
                 selected.cash || 0
             ).toLocaleString()} ريال**\n` +
@@ -590,6 +607,10 @@ async function handleCharacterModals(
         'character_create_modal'
     ) {
 
+        // =================================================
+        // قراءة البيانات
+        // =================================================
+
         const name =
             interaction.fields
                 .getTextInputValue(
@@ -598,10 +619,10 @@ async function handleCharacterModals(
                 .trim();
 
 
-        const psn =
+        const psId =
             interaction.fields
                 .getTextInputValue(
-                    'character_psn'
+                    'character_psid'
                 )
                 .trim();
 
@@ -631,7 +652,7 @@ async function handleCharacterModals(
 
 
         // =================================================
-        // التحقق من البيانات
+        // التحقق من الاسم
         // =================================================
 
         if (name.length < 2) {
@@ -648,12 +669,16 @@ async function handleCharacterModals(
         }
 
 
-        if (psn.length < 2) {
+        // =================================================
+        // التحقق من PS ID
+        // =================================================
+
+        if (psId.length < 2) {
 
             return interaction.reply({
 
                 content:
-                    '❌ اسم حساب السوني غير صحيح.',
+                    '❌ PS ID غير صحيح.',
 
                 flags:
                     MessageFlags.Ephemeral
@@ -662,7 +687,9 @@ async function handleCharacterModals(
         }
 
 
-        // التحقق من التاريخ
+        // =================================================
+        // التحقق من تاريخ الميلاد
+        // =================================================
 
         const dateRegex =
             /^\d{4}-\d{2}-\d{2}$/;
@@ -686,7 +713,9 @@ async function handleCharacterModals(
 
 
         const parsedDate =
-            new Date(birthDate);
+            new Date(
+                `${birthDate}T00:00:00`
+            );
 
 
         if (
@@ -707,6 +736,42 @@ async function handleCharacterModals(
         }
 
 
+        // =================================================
+        // التأكد أن التاريخ فعلاً مطابق
+        // =================================================
+
+        const [
+            year,
+            month,
+            day
+        ] =
+            birthDate
+                .split('-')
+                .map(Number);
+
+
+        if (
+            parsedDate.getFullYear() !== year ||
+            parsedDate.getMonth() + 1 !== month ||
+            parsedDate.getDate() !== day
+        ) {
+
+            return interaction.reply({
+
+                content:
+                    '❌ تاريخ الميلاد غير صحيح.',
+
+                flags:
+                    MessageFlags.Ephemeral
+
+            });
+        }
+
+
+        // =================================================
+        // مكان الميلاد
+        // =================================================
+
         if (birthPlace.length < 2) {
 
             return interaction.reply({
@@ -720,6 +785,10 @@ async function handleCharacterModals(
             });
         }
 
+
+        // =================================================
+        // الجنس
+        // =================================================
 
         const normalizedGender =
             gender.toLowerCase();
@@ -747,7 +816,7 @@ async function handleCharacterModals(
 
 
         // =================================================
-        // التأكد من عدم تجاوز 3 كركترات
+        // التأكد من الحد الأقصى
         // =================================================
 
         const characters =
@@ -779,13 +848,11 @@ async function handleCharacterModals(
             character =
                 citizens.createCharacter(
                     userId,
-                    {
-                        name,
-                        psn,
-                        birthDate,
-                        birthPlace,
-                        gender
-                    }
+                    name,
+                    psId,
+                    birthDate,
+                    birthPlace,
+                    gender
                 );
 
         } catch (error) {
@@ -808,6 +875,10 @@ async function handleCharacterModals(
         }
 
 
+        // =================================================
+        // فشل الإنشاء
+        // =================================================
+
         if (!character) {
 
             return interaction.reply({
@@ -822,13 +893,17 @@ async function handleCharacterModals(
         }
 
 
+        // =================================================
+        // نجاح
+        // =================================================
+
         return interaction.reply({
 
             content:
                 `✅ **تم إنشاء الكركتر بنجاح!**\n\n` +
                 `👤 الاسم: **${character.name}**\n` +
-                `🎮 حساب السوني: **${character.psn}**\n` +
-                `🎂 تاريخ الميلاد: **${character.birthDate}**\n` +
+                `🎮 PS ID: **${character.psId}**\n` +
+                `🎂 تاريخ الميلاد: **${character.dateOfBirth}**\n` +
                 `📍 مكان الميلاد: **${character.birthPlace}**\n` +
                 `⚧️ الجنس: **${character.gender}**\n` +
                 `🆔 رقم الهوية: \`${character.citizenId}\`\n\n` +
